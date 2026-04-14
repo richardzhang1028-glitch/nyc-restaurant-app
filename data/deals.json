@@ -1,0 +1,112 @@
+[
+    {
+        "title": "Student Discount 10% Off",
+        "description": "Show your Columbia ID and get 10% off your entire order",
+        "restaurant": "Junzi Kitchen",
+        "location": "2896 Broadway New York",
+        "type": "deal",
+        "discount": "10% off",
+        "time": "All day",
+        "date": "Every day",
+        "school": "columbia"
+    },
+    {
+        "title": "Free Pizza Night",
+        "description": "Free pizza for all Columbia students at Lerner Hall",
+        "restaurant": "Koronet Pizza",
+        "location": "Lerner Hall Columbia University",
+        "type": "free_food",
+        "discount": "Free",
+        "time": "6:00 PM - 8:00 PM",
+        "date": "Every Friday",
+        "school": "columbia"
+    },
+    {
+        "title": "Happy Hour Special",
+        "description": "Buy one get one free on all drinks",
+        "restaurant": "The Heights Bar and Grill",
+        "location": "2867 Broadway New York",
+        "type": "deal",
+        "discount": "BOGO drinks",
+        "time": "4:00 PM - 7:00 PM",
+        "date": "Monday to Friday",
+        "school": "columbia"
+    },
+    {
+        "title": "Columbia Farmers Market",
+        "description": "Fresh local produce and food vendors on campus",
+        "restaurant": "Various vendors",
+        "location": "Low Plaza Columbia University",
+        "type": "event",
+        "discount": "Free entry",
+        "time": "8:00 AM - 4:00 PM",
+        "date": "Every Thursday",
+        "school": "columbia"
+    },
+    {
+        "title": "Student Lunch Special",
+        "description": "Any sandwich and drink for 10 dollars with student ID",
+        "restaurant": "Max Caffe",
+        "location": "1262 Amsterdam Ave New York",
+        "type": "coupon",
+        "discount": "10 dollar combo",
+        "time": "11:00 AM - 3:00 PM",
+        "date": "Monday to Friday",
+        "school": "columbia"
+    },
+    {
+        "title": "Free Coffee Monday",
+        "description": "Free drip coffee for NYU students every Monday morning",
+        "restaurant": "Think Coffee",
+        "location": "248 Mercer St New York",
+        "type": "free_food",
+        "discount": "Free coffee",
+        "time": "8:00 AM - 11:00 AM",
+        "date": "Every Monday",
+        "school": "nyu"
+    },
+    {
+        "title": "NYU Student Discount",
+        "description": "15% off with valid NYU ID",
+        "restaurant": "Chipotle Mexican Grill",
+        "location": "Broadway and Houston St",
+        "type": "deal",
+        "discount": "15% off",
+        "time": "All day",
+        "date": "Every day",
+        "school": "nyu"
+    },
+    {
+        "title": "Free Food Fridays",
+        "description": "Free snacks and refreshments at Kimmel Center",
+        "restaurant": "NYU Kimmel Center",
+        "location": "60 Washington Square S New York",
+        "type": "free_food",
+        "discount": "Free",
+        "time": "12:00 PM - 2:00 PM",
+        "date": "Every Friday",
+        "school": "nyu"
+    },
+    {
+        "title": "Happy Hour at Off The Wagon",
+        "description": "Student night with discounted drinks and appetizers",
+        "restaurant": "Off The Wagon",
+        "location": "109 MacDougal St New York",
+        "type": "deal",
+        "discount": "50% off appetizers",
+        "time": "5:00 PM - 8:00 PM",
+        "date": "Wednesday",
+        "school": "nyu"
+    },
+    {
+        "title": "NYU International Food Festival",
+        "description": "International food festival featuring cuisines from around the world",
+        "restaurant": "Various vendors",
+        "location": "Washington Square Park",
+        "type": "event",
+        "discount": "Free entry",
+        "time": "11:00 AM - 6:00 PM",
+        "date": "Last Saturday of month",
+        "school": "nyu"
+    }
+]
