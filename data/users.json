@@ -1,0 +1,18 @@
+[
+  {"id": 1, "name": "Emma Chen", "email": "emma@columbia.edu", "school": "columbia", "theme": "blue", "friends": [2,3]},
+  {"id": 2, "name": "Ryan Park", "email": "ryan@columbia.edu", "school": "columbia", "theme": "blue", "friends": [1,4]},
+  {"id": 3, "name": "Sophia Li", "email": "sophia@columbia.edu", "school": "columbia", "theme": "blue", "friends": [1]},
+  {"id": 4, "name": "David Kim", "email": "david@columbia.edu", "school": "columbia", "theme": "blue", "friends": [2,5]},
+  {"id": 5, "name": "Alex Wang", "email": "alex@columbia.edu", "school": "columbia", "theme": "blue", "friends": [4]},
+  {"id": 6, "name": "Lena Xu", "email": "lena@columbia.edu", "school": "columbia", "theme": "blue", "friends": [7]},
+  {"id": 7, "name": "Chris Sun", "email": "chris@columbia.edu", "school": "columbia", "theme": "blue", "friends": [6]},
+  {"id": 8, "name": "Kevin Liu", "email": "kevin@columbia.edu", "school": "columbia", "theme": "blue", "friends": [1]},
+
+  {"id": 9, "name": "Maya Shah", "email": "maya@nyu.edu", "school": "nyu", "theme": "purple", "friends": [10]},
+  {"id": 10, "name": "Noah Green", "email": "noah@nyu.edu", "school": "nyu", "theme": "purple", "friends": [9,11]},
+  {"id": 11, "name": "Olivia Brown", "email": "olivia@nyu.edu", "school": "nyu", "theme": "purple", "friends": [10]},
+  {"id": 12, "name": "Ethan Lee", "email": "ethan@nyu.edu", "school": "nyu", "theme": "purple", "friends": [13]},
+  {"id": 13, "name": "Lucas Chen", "email": "lucas@nyu.edu", "school": "nyu", "theme": "purple", "friends": [12]},
+  {"id": 14, "name": "Ava Patel", "email": "ava@nyu.edu", "school": "nyu", "theme": "purple", "friends": [15]},
+  {"id": 15, "name": "Daniel Wu", "email": "daniel@nyu.edu", "school": "nyu", "theme": "purple", "friends": [14]}
+]
