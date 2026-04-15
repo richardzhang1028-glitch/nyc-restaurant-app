@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BITE NYC</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+</head>
+<body>
+
+<!-- ════════════════════════════════════════
+  SCREEN 1: LOGIN
+════════════════════════════════════════ -->
+<div id="screenLogin">
+  <div class="login-page">
+
+    <!-- Left brand -->
+    <div class="brand-panel" id="brandPanel">
+      <div class="brand-logo">
+        <div class="brand-logo-icon">🍜</div>
+        <div class="brand-logo-name">BITE NYC</div>
+      </div>
+      <div class="brand-hero">
+        <div class="brand-hero-eyebrow">NYC University Dining</div>
+        <h1 class="brand-hero-title">Find great food,<br><em>near your campus.</em></h1>
+        <p class="brand-hero-sub">Personalized restaurant discovery, today's deals, and a social check-in experience — built for NYC students.</p>
+      </div>
+      <div class="brand-schools">
+        <div class="school-chip" id="chipColumbia">Columbia</div>
+        <div class="school-chip" id="chipNYU">NYU</div>
+        <div class="school-chip" id="chipOther">+ more</div>
+      </div>
+    </div>
+
+    <!-- Right form -->
+    <div class="form-panel">
+      <div class="form-top-bar">New here? <a href="#">Learn more</a></div>
+      <div class="form-inner">
+        <div class="form-eyebrow" id="formEyebrow">Student Access</div>
+        <h2 class="form-title">Sign in</h2>
+        <p class="form-sub">Use your university email to unlock your personalized campus dining experience.</p>
+
+        <div class="input-group">
+          <label class="input-label" for="emailInput">University email</label>
+          <div class="input-wrap">
+            <input type="email" id="emailInput" class="email-input" placeholder="you@university.edu" autocomplete="email" spellcheck="false">
+            <div class="l-school-badge" id="lSchoolBadge">
+              <div class="l-school-badge-dot" id="lBadgeDot"></div>
+              <span id="lBadgeText">Columbia</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="demo-row">
+          <div class="demo-label">Try a demo account</div>
+          <button class="demo-btn" onclick="fillDemo('columbia')"><div class="demo-btn-dot" style="background:#1a6bb5"></div>Columbia</button>
+          <button class="demo-btn" onclick="fillDemo('nyu')"><div class="demo-btn-dot" style="background:#8B1DB5"></div>NYU</button>
+        </div>
+
+        <button class="submit-btn" id="submitBtn" disabled onclick="handleSubmit()">
+          <span>Continue</span><span class="submit-btn-arrow">→</span>
+        </button>
+
+        <div class="or-row"><div class="or-line"></div><span>or</span><div class="or-line"></div></div>
+        <div class="sso-row">
+          <button class="sso-btn">
+            <svg class="sso-icon" viewBox="0 0 24 24" fill="none">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+            Google
+          </button>
+          <button class="sso-btn">
+            <svg class="sso-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+            School SSO
+          </button>
+        </div>
+
+        <div class="terms">By continuing, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>. Your .edu email is used only for school identification.</div>
+      </div>
+    </div>
+
+  </div>
+</div><!-- end #screenLogin -->
+
+
+<!-- ════════════════════════════════════════
+  SCREEN 2: DASHBOARD
+════════════════════════════════════════ -->
+<div id="screenDashboard">
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-logo" onclick="goToLogin()">
+      <div class="nav-logo-icon" id="navLogoIcon">🍜</div>
+      <div class="nav-logo-name">BITE NYC</div>
+    </div>
+    <div class="nav-search">
+      <svg class="nav-search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M15 15l-3-3"/></svg>
+      <input type="text" id="searchInput" placeholder="Search restaurants…">
+    </div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" id="tabDiscover" onclick="setNavTab('discover')">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 2.5"/></svg>Discover
+      </button>
+      <button class="nav-tab" id="tabDeals" onclick="setNavTab('deals')">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9.5 3L3 9.5 10.5 17l6.5-6.5L10.5 3h-1z"/><circle cx="13" cy="7" r="1.2" fill="currentColor"/></svg>Deals
+      </button>
+      <button class="nav-tab" id="tabFriends" onclick="setNavTab('friends')">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="7" cy="7" r="3"/><path d="M1 17c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="14.5" cy="7" r="2.5"/><path d="M17 17c0-2.5-1.8-4.5-4-5"/></svg>Social
+      </button>
+    </div>
+    <div class="nav-right">
+      <div class="nav-school-badge" id="navSchoolBadge">Columbia</div>
+      <div class="nav-avatar" id="navAvatar">E</div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="dash-main">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-head">
+        <div class="sidebar-title" id="sidebarTitle">Near Columbia</div>
+        <div class="sidebar-sub"   id="sidebarSub">6 spots · sorted by rating</div>
+      </div>
+
+      <div class="mood-row">
+        <button class="mood-chip" onclick="setMood(this,'quick')">⚡ Quick</button>
+        <button class="mood-chip" onclick="setMood(this,'date')">🕯 Date night</button>
+        <button class="mood-chip" onclick="setMood(this,'latenight')">🌙 Late night</button>
+        <button class="mood-chip" onclick="setMood(this,'healthy')">🥗 Light</button>
+        <button class="mood-chip" onclick="setMood(this,'instagrammable')">📸 Aesthetic</button>
+      </div>
+
+      <div class="sidebar-toggle">
+        <button class="stoggle-btn active" id="sbList" onclick="setSideView('list')">
+          <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 6h12M4 10h12M4 14h12"/></svg>List
+        </button>
+        <button class="stoggle-btn" id="sbSwipe" onclick="setSideView('swipe')">
+          <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 10h10M13 7l3 3-3 3"/></svg>Swipe
+        </button>
+      </div>
+
+      <div class="filter-row" id="filterRow">
+        <button class="filter-chip active" onclick="setFilter(this,'all')">All</button>
+        <button class="filter-chip" onclick="setFilter(this,'cheap')">$ Cheap</button>
+        <button class="filter-chip" onclick="setFilter(this,'latenight')">🌙 Late</button>
+        <button class="filter-chip" onclick="setFilter(this,'study')">📖 Study</button>
+        <button class="filter-chip" onclick="setFilter(this,'toprated')">⭐ Top</button>
+      </div>
+
+      <div class="rest-list" id="restList"></div>
+
+      <div class="swipe-panel" id="swipePanel">
+        <div class="swipe-progress" id="swipePips"></div>
+        <div class="swipe-stack" id="swipeStack">
+          <div class="swipe-back-card" id="swipeBack"></div>
+          <div class="swipe-front-card" id="swipeFront">
+            <div class="swipe-overlay-label save-lbl" id="swipeSaveLbl">SAVE ✓</div>
+            <div class="swipe-overlay-label skip-lbl" id="swipeSkipLbl">SKIP ✕</div>
+            <div class="sfc-category" id="sfcCat"></div>
+            <div class="sfc-name"     id="sfcName"></div>
+            <div class="sfc-tag"      id="sfcTag"></div>
+            <div class="sfc-badges"   id="sfcBadges"></div>
+            <div class="sfc-hint">drag →</div>
+          </div>
+        </div>
+        <div class="swipe-done" id="swipeDone" style="display:none">
+          <div class="swipe-done-emoji">🎉</div>
+          <div class="swipe-done-title">You've seen them all!</div>
+          <div class="swipe-done-sub" id="swipeDoneSub"></div>
+          <button class="swipe-restart-btn" onclick="swipeRestart()">Start over</button>
+        </div>
+        <div class="swipe-actions" id="swipeActions">
+          <button class="swipe-action-btn skip-btn" onclick="swipeAdvance('skip')">✕</button>
+          <div class="swipe-counter" id="swipeCounter">1 / 6</div>
+          <button class="swipe-action-btn save-btn" onclick="swipeAdvance('save')">✓</button>
+        </div>
+        <div class="swipe-saved" id="swipeSaved" style="display:none">
+          <div class="swipe-saved-header">Saved spots <span class="swipe-saved-count" id="swipeSavedCount">0</span></div>
+          <div id="swipeSavedItems"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAP -->
+    <div class="map-wrap">
+      <div id="map"></div>
+      <div class="map-controls">
+        <div class="map-ctrl-btn" onclick="mapInstance.zoomIn()">+</div>
+        <div class="map-ctrl-btn" onclick="mapInstance.zoomOut()">−</div>
+      </div>
+      <div class="deal-strip" id="dealStrip"></div>
+
+      <div class="detail-panel" id="detailPanel">
+        <div class="detail-close" onclick="closeDetail()">✕</div>
+        <div class="detail-head">
+          <div class="detail-category" id="dCategory"></div>
+          <div class="detail-name"     id="dName"></div>
+          <div class="detail-meta">
+            <span class="star">★</span><span id="dRating"></span>
+            <span style="color:var(--border)">·</span><span id="dPrice"></span>
+            <span style="color:var(--border)">·</span><span id="dDist"></span>
+          </div>
+        </div>
+        <div class="detail-body">
+          <div class="detail-section"><div class="detail-section-label">About</div><div class="detail-desc" id="dDesc"></div></div>
+          <div class="detail-section"><div class="detail-section-label">Tags</div><div class="detail-tags" id="dTags"></div></div>
+          <div class="detail-section"><div class="detail-section-label">Hours today</div><div id="dHours"></div></div>
+        </div>
+        <div class="detail-footer">
+          <button class="detail-btn" onclick="saveRestaurant()">♡ Save</button>
+          <button class="detail-btn primary" id="checkinBtn" onclick="doCheckin()">📍 Check In</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div><!-- end #screenDashboard -->
+
+<!-- Toast (shared) -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════
+   SCHOOL CONFIG
+══════════════════════════════════════════ */
+const SCHOOL_CFG = {
+  columbia: { name:'Columbia University', short:'Columbia', primary:'#1A6BB5', tint:'rgba(26,107,181,0.08)', mid:'rgba(26,107,181,0.18)', emoji:'🦁', greeting:'Welcome, Lion.', center:[40.8075,-73.9626], zoom:15, avatar:'E' },
+  nyu:      { name:'New York University',  short:'NYU',      primary:'#8B1DB5', tint:'rgba(139,29,181,0.08)',  mid:'rgba(139,29,181,0.18)',  emoji:'🔮', greeting:'Welcome, Violet.', center:[40.7295,-73.9965], zoom:15, avatar:'A' },
+};
+const MOOD_TAG = { quick:'⚡ Quick', date:'🕯 Date', latenight:'🌙 Late Night', healthy:'🥗 Healthy', instagrammable:'📸 Aesthetic' };
+
+/* ── Restaurant data ── */
+const ALL_RESTAURANTS = {
+  columbia:[
+    {id:1,name:'Koronet Pizza',category:'Pizza',price:'$',rating:4.3,dist:'0.1 mi',lat:40.8044,lng:-73.9645,tags:['cheap','latenight'],moods:['quick','latenight'],desc:'Famous for enormous NYC slices. Open until 4AM — the ultimate post-library stop.',hours:[['Mon–Thu','11am – 4am'],['Fri–Sat','11am – 5am'],['Sun','12pm – 3am']]},
+    {id:2,name:'Junzi Kitchen',category:'Chinese',price:'$',rating:4.5,dist:'0.2 mi',lat:40.8077,lng:-73.9634,tags:['cheap','study','healthy'],moods:['quick','healthy'],desc:'Fast, fresh Chinese-inspired bowls. Customizable and endlessly satisfying.',hours:[['Mon–Fri','11am – 9pm'],['Sat–Sun','12pm – 8pm']]},
+    {id:3,name:'Thai Market',category:'Thai',price:'$',rating:4.6,dist:'0.4 mi',lat:40.7991,lng:-73.9668,tags:['cheap','toprated'],moods:['quick','instagrammable'],desc:'A tiny kitchen beloved by locals. Massive flavor per dollar.',hours:[['Mon–Sat','11am – 10pm'],['Sun','Closed']]},
+    {id:4,name:'Community Food & Juice',category:'Café',price:'$$',rating:4.4,dist:'0.3 mi',lat:40.8019,lng:-73.9662,tags:['study','healthy','toprated'],moods:['healthy','instagrammable'],desc:'Farm-to-table café with great wifi and a calm vibe. Grad student go-to.',hours:[['Mon–Fri','8am – 9pm'],['Sat–Sun','9am – 6pm']]},
+    {id:5,name:"Tom's Restaurant",category:'Diner',price:'$$',rating:4.2,dist:'0.2 mi',lat:40.8055,lng:-73.9648,tags:['latenight'],moods:['latenight','instagrammable'],desc:'The Seinfeld diner. Classic American comfort food with serious pop-culture cred.',hours:[['Mon–Fri','6am – 2am'],['Sat–Sun','6am – 3am']]},
+    {id:6,name:'Pisticci',category:'Italian',price:'$$',rating:4.7,dist:'0.5 mi',lat:40.8012,lng:-73.9683,tags:['toprated'],moods:['date'],desc:'Cozy Italian trattoria on a tree-lined block. Date night favorite.',hours:[['Tue–Thu','5pm – 10pm'],['Fri–Sat','5pm – 11pm'],['Sun','4pm – 9pm']]},
+  ],
+  nyu:[
+    {id:7,name:"Joe's Pizza",category:'Pizza',price:'$',rating:4.7,dist:'0.1 mi',lat:40.7307,lng:-74.0005,tags:['cheap','toprated','latenight'],moods:['quick','latenight'],desc:'The definitive NYC slice. Zero frills, maximum flavor. A rite of passage.',hours:[['Mon–Thu','10am – 4am'],['Fri–Sat','10am – 5am'],['Sun','11am – 2am']]},
+    {id:8,name:"Mamoun's Falafel",category:'Middle Eastern',price:'$',rating:4.5,dist:'0.2 mi',lat:40.7308,lng:-74.0000,tags:['cheap','latenight','healthy'],moods:['quick','healthy','latenight'],desc:'Serving the neighborhood since 1971. Best late-night falafel in the city.',hours:[['Daily','10am – 4am']]},
+    {id:9,name:'Prince Street Pizza',category:'Pizza',price:'$',rating:4.6,dist:'0.3 mi',lat:40.7253,lng:-73.9966,tags:['cheap','toprated'],moods:['quick','instagrammable'],desc:'Pepperoni cups + crispy bottom = the perfect square slice.',hours:[['Mon–Sat','11am – 11pm'],['Sun','12pm – 10pm']]},
+    {id:10,name:"Xi'an Famous Foods",category:'Chinese',price:'$',rating:4.5,dist:'0.4 mi',lat:40.7258,lng:-73.9990,tags:['cheap','study'],moods:['quick'],desc:'Hand-pulled noodles from Northwest China. Spicy, bold, completely addictive.',hours:[['Mon–Fri','11am – 9:30pm'],['Sat–Sun','11am – 10pm']]},
+    {id:11,name:"Sticky's Finger Joint",category:'American',price:'$$',rating:4.3,dist:'0.2 mi',lat:40.7289,lng:-73.9984,tags:['latenight'],moods:['latenight'],desc:'Creative takes on chicken fingers. Sauces worth the trip alone.',hours:[['Mon–Thu','11am – 12am'],['Fri–Sat','11am – 2am'],['Sun','12pm – 11pm']]},
+    {id:12,name:'Carbone',category:'Italian',price:'$$$$',rating:4.8,dist:'0.6 mi',lat:40.7297,lng:-74.0010,tags:['toprated'],moods:['date','instagrammable'],desc:'Old-school red-sauce glamour. The vibe is as good as the pasta. Reserve ahead.',hours:[['Tue–Sun','5:30pm – 11pm']]},
+  ],
+};
+const DEALS = {
+  columbia:[{type:'deal',icon:'🍕',label:'Deal',title:'15% off lunch combos',time:'11am – 2pm · Junzi Kitchen'},{type:'free',icon:'🎉',label:'Free Food',title:'Free pizza at Lerner Hall',time:'6pm – 7:30pm · Student Council'},{type:'event',icon:'☕',label:'Event',title:'Study + coffee meetup',time:'3pm – 5pm · Butler Lawn'},{type:'deal',icon:'🥗',label:'Deal',title:'BOGO salads today',time:'All day · Community Food & Juice'}],
+  nyu:[{type:'free',icon:'🎉',label:'Free Food',title:'Free bagels at Kimmel',time:'8am – 10am · GSA'},{type:'deal',icon:'🍕',label:'Deal',title:'$1 off any slice',time:"All day · Joe's Pizza"},{type:'event',icon:'🎵',label:'Event',title:'Jazz & dinner on the square',time:'7pm – 9pm · Washington Sq'},{type:'deal',icon:'🌯',label:'Deal',title:'Student discount with ID',time:"All day · Mamoun's Falafel"}],
+};
+
+/* ══════════════════════════════════════════
+   LOGIN STATE
+══════════════════════════════════════════ */
+let loginSchool = null;
+
+const emailInput  = document.getElementById('emailInput');
+const submitBtn   = document.getElementById('submitBtn');
+const formEyebrow = document.getElementById('formEyebrow');
+const brandPanel  = document.getElementById('brandPanel');
+const lBadge      = document.getElementById('lSchoolBadge');
+const lBadgeDot   = document.getElementById('lBadgeDot');
+const lBadgeText  = document.getElementById('lBadgeText');
+const chipColumbia= document.getElementById('chipColumbia');
+const chipNYU     = document.getElementById('chipNYU');
+const chipOther   = document.getElementById('chipOther');
+
+function detectSchool(email) {
+  const v = email.toLowerCase();
+  if (v.includes('@columbia.edu')) return 'columbia';
+  if (v.includes('@nyu.edu'))      return 'nyu';
+  return null;
+}
+
+function applyLoginTheme(key) {
+  const s = SCHOOL_CFG[key];
+  const root = document.documentElement;
+  if (s) {
+    root.style.setProperty('--p',      s.primary);
+    root.style.setProperty('--p-tint', s.tint);
+    root.style.setProperty('--p-mid',  s.mid);
+    brandPanel.style.background = s.primary;
+    lBadgeText.textContent = s.short;
+    lBadgeDot.style.background = s.primary;
+    lBadge.classList.add('visible');
+    emailInput.classList.add('valid');
+    formEyebrow.textContent = s.short.toUpperCase() + ' — Student Access';
+    chipColumbia.classList.toggle('active', key === 'columbia');
+    chipNYU.classList.toggle('active',      key === 'nyu');
+    chipOther.classList.remove('active');
+  } else {
+    root.style.setProperty('--p',      '#111111');
+    root.style.setProperty('--p-tint', 'rgba(17,17,17,0.06)');
+    root.style.setProperty('--p-mid',  'rgba(17,17,17,0.15)');
+    brandPanel.style.background = '#111111';
+    lBadge.classList.remove('visible');
+    emailInput.classList.remove('valid');
+    formEyebrow.textContent = 'Student Access';
+    [chipColumbia,chipNYU,chipOther].forEach(c=>c.classList.remove('active'));
+  }
+}
+
+emailInput.addEventListener('input', () => {
+  const val = emailInput.value.trim();
+  const key = detectSchool(val);
+  if (key !== loginSchool) { loginSchool = key; applyLoginTheme(key); }
+  submitBtn.disabled = !(val.includes('@') && val.includes('.'));
+});
+
+emailInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !submitBtn.disabled) handleSubmit();
+});
+
+function fillDemo(key) {
+  emailInput.value = { columbia:'emma@columbia.edu', nyu:'alex@nyu.edu' }[key];
+  emailInput.dispatchEvent(new Event('input'));
+  emailInput.focus();
+}
+
+/* ── Login → Dashboard transition ── */
+/* ── Login → Dashboard transition (now talks to backend) ── */
+async function handleSubmit() {
+  if (submitBtn.disabled) return;
+  const email = emailInput.value.trim();
+  const key = loginSchool || 'columbia';
+  const cfg = SCHOOL_CFG[key];
+
+  // 1. Try to log in. If user doesn't exist (404), auto-register.
+  try {
+    let res = await fetch(`${API_BASE}/api/users/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+
+    if (res.status === 404) {
+      // New user — auto-register with email-derived name
+      const name = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      res = await fetch(`${API_BASE}/api/users/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, school: key })
+      });
+    }
+
+    if (!res.ok) throw new Error('Login failed');
+    currentUser = await res.json();
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    console.log('Logged in as:', currentUser);
+  } catch (err) {
+    console.error(err);
+    showToast('⚠️ Could not connect to server');
+    return;
+  }
+
+  showToast(`${cfg.emoji}  ${cfg.greeting}`);
+
+  school = key;
+  applyDashTheme();
+  buildDeals();
+
+  // Show dashboard
+  document.getElementById('screenLogin').classList.add('hidden');
+  document.getElementById('screenDashboard').classList.add('visible');
+
+  // Init or fly map after a frame
+  setTimeout(() => {
+    if (!mapBooted) {
+      initMap();
+      mapBooted = true;
+    } else {
+      mapInstance.flyTo(cfg.center, cfg.zoom, { duration: 1 });
+    }
+    activeMood = null; activeFilter = 'all'; activeId = null;
+    document.querySelectorAll('.mood-chip').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.filter-chip').forEach((c, i) => c.classList.toggle('active', i === 0));
+    setSideView('list');
+    buildList();
+  }, 80);
+}
+
+function goToLogin() {
+  // Logo click → back to login
+  document.getElementById('screenLogin').classList.remove('hidden');
+  document.getElementById('screenDashboard').classList.remove('visible');
+  // reset login form appearance
+  applyLoginTheme(school);
+  emailInput.value = { columbia:'emma@columbia.edu', nyu:'alex@nyu.edu' }[school] || '';
+  emailInput.dispatchEvent(new Event('input'));
+}
+
+/* ══════════════════════════════════════════
+   DASHBOARD STATE
+══════════════════════════════════════════ */
+/* ══════════════════════════════════════════
+   GLOBAL USER STATE (added for backend integration)
+══════════════════════════════════════════ */
+let currentUser = null;  // populated after login: { id, name, email, school, theme, friends }
+const API_BASE = '';     // empty = same origin (server serves both API and static files)
+let school       = 'columbia';
+let activeMood   = null;
+let activeFilter = 'all';
+let sideView     = 'list';
+let activeId     = null;
+let checkedIn    = new Set();
+let mapInstance  = null;
+let markers      = {};
+let currentRests = [];
+let mapBooted    = false;
+
+// swipe
+let swipeIdx=0, swipeSaved=[], swipePool=[];
+
+function dashInit() {
+  // kept for back-compat; real init now happens in handleSubmit
+}
+
+function applyDashTheme() {
+  const s = SCHOOL_CFG[school];
+  const r = document.documentElement;
+  r.style.setProperty('--p',      s.primary);
+  r.style.setProperty('--p-tint', s.tint);
+  r.style.setProperty('--p-mid',  s.mid);
+  document.getElementById('navSchoolBadge').textContent = s.short;
+  document.getElementById('navAvatar').textContent      = s.avatar;
+  document.getElementById('navLogoIcon').style.background = s.primary;
+  document.getElementById('sidebarTitle').textContent   = `Near ${s.short}`;
+}
+
+/* nav tabs */
+function setNavTab(tab) {
+  if (tab === 'friends') { window.location.href = '/leaderboard.html'; return; }
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  const el = document.getElementById('tab'+tab[0].toUpperCase()+tab.slice(1));
+  if (el) el.classList.add('active');
+  if (tab !== 'discover') showToast('Coming soon — stay tuned! 👀');
+}
+
+/* mood */
+function setMood(el, key) {
+  if (activeMood===key) { activeMood=null; el.classList.remove('active'); }
+  else { document.querySelectorAll('.mood-chip').forEach(c=>c.classList.remove('active')); el.classList.add('active'); activeMood=key; }
+  buildList();
+  if (sideView==='swipe') resetSwipePool();
+}
+
+/* side view */
+function setSideView(v) {
+  sideView = v;
+  document.getElementById('sbList').classList.toggle('active',  v==='list');
+  document.getElementById('sbSwipe').classList.toggle('active', v==='swipe');
+  document.getElementById('restList').style.display  = v==='list'  ? '' : 'none';
+  document.getElementById('swipePanel').classList.toggle('visible', v==='swipe');
+  document.getElementById('filterRow').style.display = v==='list'  ? '' : 'none';
+  if (v==='swipe') resetSwipePool();
+}
+
+/* filter */
+function setFilter(el, key) {
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active'); activeFilter=key; buildList();
+}
+
+/* search */
+document.getElementById('searchInput').addEventListener('input', buildList);
+
+/* data */
+function getFilteredRests() {
+  let rests = ALL_RESTAURANTS[school] || [];
+  if (activeMood) rests = rests.filter(r=>r.moods.includes(activeMood));
+  if (activeFilter!=='all') rests = rests.filter(r=>r.tags.includes(activeFilter));
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  if (q) rests = rests.filter(r=>r.name.toLowerCase().includes(q)||r.category.toLowerCase().includes(q)||r.tags.some(t=>t.includes(q)));
+  return rests.sort((a,b)=>b.rating-a.rating);
+}
+
+function buildList() {
+  currentRests = getFilteredRests();
+  const sub = activeMood
+    ? `${currentRests.length} spots matching "${MOOD_TAG[activeMood]}"`
+    : `${currentRests.length} spot${currentRests.length!==1?'s':''} · sorted by rating`;
+  document.getElementById('sidebarSub').textContent = sub;
+  const el = document.getElementById('restList');
+  if (!currentRests.length) { el.innerHTML=`<div style="padding:28px 16px;text-align:center;color:var(--ink-3);font-size:14px">No spots match — try a different filter.</div>`;updateMarkers([]);return; }
+  el.innerHTML = currentRests.map((r,i)=>`
+    <div class="rest-card ${activeId===r.id?'active':''}" style="animation-delay:${i*.04}s" onclick="selectRestaurant(${r.id})">
+      ${checkedIn.has(r.id)?'<div class="checkin-badge">✓ Checked in</div>':''}
+      <div class="rest-card-top"><div class="rest-card-name">${r.name}</div><div class="rest-card-price">${r.price}</div></div>
+      <div class="rest-card-meta">
+        <span class="rest-card-rating"><span class="star">★</span> ${r.rating}</span>
+        <div class="rest-card-dot"></div><span>${r.category}</span>
+        <div class="rest-card-dot"></div><span>${r.dist}</span>
+      </div>
+      <div class="rest-card-tags">${r.tags.map(t=>`<span class="rest-tag">${tagLabel(t)}</span>`).join('')}</div>
+    </div>`).join('');
+  updateMarkers(currentRests);
+}
+
+function tagLabel(t){return{cheap:'$ Cheap',latenight:'🌙 Late Night',study:'📖 Study',healthy:'🥗 Healthy',toprated:'⭐ Top Rated'}[t]||t;}
+
+/* map */
+function initMap() {
+  const s = SCHOOL_CFG[school];
+  mapInstance = L.map('map',{center:s.center,zoom:s.zoom,zoomControl:false,attributionControl:false});
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(mapInstance);
+  setTimeout(() => mapInstance.invalidateSize(), 100);
+  buildList();
+}
+function makeIcon(color,active){
+  const sz=active?34:28;
+  return L.divIcon({className:'',html:`<div style="width:${sz}px;height:${sz}px;border-radius:50% 50% 50% 0;background:${color};border:${active?'3px':'2px'} solid white;box-shadow:0 ${active?6:3}px ${active?18:10}px rgba(0,0,0,${active?.28:.18});transform:rotate(-45deg);transition:all .25s"></div>`,iconSize:[sz,sz],iconAnchor:[sz/2,sz],popupAnchor:[0,-sz-4]});
+}
+function updateMarkers(rests){
+  const s=SCHOOL_CFG[school];
+  Object.values(markers).forEach(m=>m.remove());markers={};
+  rests.forEach(r=>{
+    const active=r.id===activeId;
+    const m=L.marker([r.lat,r.lng],{icon:makeIcon(s.primary,active)}).addTo(mapInstance);
+    m.bindPopup(`<div class="map-popup" onclick="selectRestaurant(${r.id})"><div class="map-popup-name">${r.name}</div><div class="map-popup-sub"><span class="star">★</span>${r.rating}<span style="opacity:.3">·</span>${r.price}<span style="opacity:.3">·</span>${r.dist}</div></div>`,{closeButton:false,maxWidth:220});
+    m.on('click',()=>selectRestaurant(r.id));markers[r.id]=m;
+  });
+}
+function selectRestaurant(id){
+  activeId=id;
+  const r=ALL_RESTAURANTS[school].find(x=>x.id===id);
+  if(!r)return;
+  buildList();updateMarkers(currentRests);
+  mapInstance.flyTo([r.lat,r.lng],16,{duration:.8});
+  setTimeout(()=>markers[id]&&markers[id].openPopup(),200);
+  openDetail(r);
+}
+
+/* detail */
+function openDetail(r){
+  document.getElementById('dCategory').textContent=r.category;
+  document.getElementById('dName').textContent=r.name;
+  document.getElementById('dRating').textContent=r.rating;
+  document.getElementById('dPrice').textContent=r.price;
+  document.getElementById('dDist').textContent=r.dist;
+  document.getElementById('dDesc').textContent=r.desc;
+  document.getElementById('dTags').innerHTML=r.tags.map(t=>`<span class="detail-tag">${tagLabel(t)}</span>`).join('');
+  document.getElementById('dHours').innerHTML=r.hours.map(([d,t])=>`<div class="detail-hours-row"><span class="detail-hours-day">${d}</span><span>${t}</span></div>`).join('');
+  const btn=document.getElementById('checkinBtn');
+  btn.innerHTML=checkedIn.has(r.id)?'✓ Checked In':'📍 Check In';
+  btn.classList.toggle('checked',checkedIn.has(r.id));
+  document.getElementById('detailPanel').classList.add('open');
+}
+function closeDetail(){document.getElementById('detailPanel').classList.remove('open');activeId=null;buildList();updateMarkers(currentRests);}
+async function doCheckin(){
+  if(!activeId||checkedIn.has(activeId))return;
+  if(!currentUser){ showToast('⚠️ Please log in first'); return; }
+  const r=ALL_RESTAURANTS[school].find(x=>x.id===activeId);
+  if(!r)return;
+
+  // Optimistic UI update — feels instant
+  checkedIn.add(activeId);
+  document.getElementById('checkinBtn').innerHTML='✓ Checked In';
+  document.getElementById('checkinBtn').classList.add('checked');
+  buildList();
+  showToast(`Checked in at ${r.name}! 📍`);
+
+  // Persist to backend
+  try {
+    await fetch(`${API_BASE}/api/checkins`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: currentUser.id,
+        restaurant_place_id: `mock_${r.id}`,
+        restaurant_name: r.name,
+        school: school
+      })
+    });
+  } catch (err) {
+    console.error('Failed to save check-in:', err);
+  }
+}
+function saveRestaurant(){if(!activeId)return;const r=ALL_RESTAURANTS[school].find(x=>x.id===activeId);showToast(`${r?.name} saved ♡`);}
+
+/* swipe */
+function resetSwipePool(){
+  swipePool=getFilteredRests().slice();swipeIdx=0;swipeSaved=[];
+  document.getElementById('swipeDone').style.display='none';
+  document.getElementById('swipeStack').style.display='';
+  document.getElementById('swipeActions').style.display='';
+  renderSwipeCard();renderSwipePips();renderSwipeSaved();
+}
+function renderSwipePips(){
+  document.getElementById('swipePips').innerHTML=swipePool.map((_,i)=>{
+    const cls=i<swipeIdx?'done':i===swipeIdx?'current':'';
+    return`<div class="swipe-pip ${cls}"></div>`;
+  }).join('');
+}
+function renderSwipeCard(){
+  if(swipeIdx>=swipePool.length){showSwipeDone();return;}
+  const r=swipePool[swipeIdx],r2=swipePool[swipeIdx+1];
+  document.getElementById('sfcCat').textContent=r.category;
+  document.getElementById('sfcName').textContent=r.name;
+  document.getElementById('sfcTag').textContent=r.desc.slice(0,70)+(r.desc.length>70?'…':'');
+  document.getElementById('sfcBadges').innerHTML=[r.price,...r.moods.map(m=>MOOD_TAG[m])].map(b=>`<span class="sfc-badge">${b}</span>`).join('');
+  document.getElementById('swipeBack').style.display=r2?'':'none';
+  document.getElementById('swipeCounter').textContent=`${swipeIdx+1} / ${swipePool.length}`;
+  const fc=document.getElementById('swipeFront');
+  fc.style.transition='';fc.style.transform='';fc.style.opacity='';
+  document.getElementById('swipeSaveLbl').style.opacity='0';
+  document.getElementById('swipeSkipLbl').style.opacity='0';
+}
+function showSwipeDone(){
+  document.getElementById('swipeStack').style.display='none';
+  document.getElementById('swipeActions').style.display='none';
+  document.getElementById('swipeDone').style.display='flex';
+  document.getElementById('swipeDoneSub').textContent=swipeSaved.length?`You saved ${swipeSaved.length} spot${swipeSaved.length>1?'s':''}!`:'Nothing saved — try again?';
+}
+function swipeAdvance(action){
+  if(swipeIdx>=swipePool.length)return;
+  const r=swipePool[swipeIdx],fc=document.getElementById('swipeFront');
+  if(action==='save'){swipeSaved.push(r);fc.style.transition='transform .3s var(--ease),opacity .3s';fc.style.transform='translateX(140%) rotate(14deg)';fc.style.opacity='0';document.getElementById('swipeSaveLbl').style.opacity='1';showToast(`${r.name} saved ✓`);}
+  else{fc.style.transition='transform .3s var(--ease),opacity .3s';fc.style.transform='translateX(-140%) rotate(-14deg)';fc.style.opacity='0';document.getElementById('swipeSkipLbl').style.opacity='1';}
+  setTimeout(()=>{swipeIdx++;renderSwipeCard();renderSwipePips();renderSwipeSaved();fc.style.transition='';},310);
+}
+function swipeRestart(){resetSwipePool();}
+function renderSwipeSaved(){
+  const wrap=document.getElementById('swipeSaved');
+  if(!swipeSaved.length){wrap.style.display='none';return;}
+  wrap.style.display='';
+  document.getElementById('swipeSavedCount').textContent=swipeSaved.length;
+  document.getElementById('swipeSavedItems').innerHTML=swipeSaved.map(r=>`
+    <div class="swipe-saved-item" onclick="selectRestaurant(${r.id});setSideView('list')">
+      <span class="swipe-saved-name">${r.name}</span>
+      <span class="swipe-saved-meta">${r.price} · ${r.category}</span>
+    </div>`).join('');
+}
+
+/* drag to swipe */
+(function(){
+  let startX=0,dragging=false;
+  const fc=document.getElementById('swipeFront');
+  fc.addEventListener('pointerdown',e=>{if(swipeIdx>=swipePool.length)return;startX=e.clientX;dragging=true;fc.setPointerCapture(e.pointerId);fc.style.transition='';});
+  fc.addEventListener('pointermove',e=>{
+    if(!dragging)return;
+    const dx=e.clientX-startX;
+    fc.style.transform=`translateX(${dx}px) rotate(${dx*.05}deg)`;
+    const pct=Math.min(Math.abs(dx)/80,1);
+    document.getElementById('swipeSaveLbl').style.opacity=dx>0?pct:0;
+    document.getElementById('swipeSkipLbl').style.opacity=dx<0?pct:0;
+  });
+  fc.addEventListener('pointerup',e=>{
+    if(!dragging)return;dragging=false;
+    const dx=e.clientX-startX;
+    if(dx>70)swipeAdvance('save');
+    else if(dx<-70)swipeAdvance('skip');
+    else{fc.style.transition='transform .3s var(--ease)';fc.style.transform='';document.getElementById('swipeSaveLbl').style.opacity='0';document.getElementById('swipeSkipLbl').style.opacity='0';}
+  });
+})();
+
+/* deals */
+function buildDeals(){
+  const deals=DEALS[school]||[];
+  document.getElementById('dealStrip').innerHTML=deals.map((d,i)=>`
+    <div class="deal-card" style="animation-delay:${i*.08}s">
+      <div class="deal-icon ${d.type}">${d.icon}</div>
+      <div class="deal-body"><div class="deal-label">${d.label}</div><div class="deal-title">${d.title}</div><div class="deal-time">${d.time}</div></div>
+    </div>`).join('');
+}
+
+/* toast */
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
+</script>
+</body>
+</html>

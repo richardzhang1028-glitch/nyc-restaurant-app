@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Social · BITE NYC</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  body { overflow: auto; }
+  .lb-wrap { max-width: 720px; margin: 0 auto; padding: 32px 24px 80px; }
+  .lb-back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-3); text-decoration: none; margin-bottom: 20px; }
+  .lb-back:hover { color: var(--p); }
+
+  /* Top-level page tabs (Leaderboard / Friends) */
+  .pagebar { display: flex; gap: 4px; background: var(--p-tint); padding: 4px; border-radius: 12px; margin-bottom: 28px; }
+  .pagebar-tab { flex: 1; padding: 12px 16px; border-radius: 9px; border: none; background: transparent; font-family: var(--sans); font-size: 14px; font-weight: 500; color: var(--ink-2); cursor: pointer; transition: all .2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .pagebar-tab.active { background: var(--surface); color: var(--p); box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+
+  .lb-eyebrow { font-size: 11px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--p); margin-bottom: 8px; }
+  .lb-title { font-family: var(--serif); font-size: 38px; line-height: 1.1; color: var(--ink); margin-bottom: 8px; }
+  .lb-sub { font-size: 14px; color: var(--ink-2); margin-bottom: 28px; }
+
+  .lb-tabs { display: flex; gap: 4px; background: var(--p-tint); padding: 4px; border-radius: 12px; margin-bottom: 16px; }
+  .lb-tab { flex: 1; padding: 10px 16px; border-radius: 8px; border: none; background: transparent; font-family: var(--sans); font-size: 13px; font-weight: 500; color: var(--ink-2); cursor: pointer; transition: all .2s; }
+  .lb-tab.active { background: var(--surface); color: var(--p); box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+
+  .lb-toggle { display: flex; gap: 8px; margin-bottom: 24px; }
+  .lb-toggle-btn { padding: 6px 14px; border-radius: 99px; border: 1.5px solid var(--border); background: transparent; font-size: 12px; font-weight: 500; color: var(--ink-2); cursor: pointer; transition: all .2s; }
+  .lb-toggle-btn.active { border-color: var(--p); color: var(--p); background: var(--p-tint); }
+
+  .lb-list { display: flex; flex-direction: column; gap: 8px; }
+  .lb-row { display: flex; align-items: center; gap: 16px; padding: 16px 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; transition: transform .15s, box-shadow .2s; }
+  .lb-row:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,.06); }
+  .lb-rank { font-family: var(--serif); font-size: 22px; color: var(--ink-3); width: 32px; text-align: center; }
+  .lb-row.top1 .lb-rank { color: var(--p); }
+  .lb-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--p-tint); color: var(--p); display: flex; align-items: center; justify-content: center; font-weight: 500; font-size: 14px; }
+  .lb-name { flex: 1; font-size: 15px; font-weight: 500; color: var(--ink); }
+  .lb-school { font-size: 11px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .08em; margin-left: 6px; }
+  .lb-count { font-family: var(--serif); font-size: 22px; color: var(--p); }
+  .lb-count-label { font-size: 11px; color: var(--ink-3); margin-left: 4px; }
+  .lb-empty { text-align: center; padding: 60px 20px; color: var(--ink-3); font-size: 14px; }
+  .lb-loading { text-align: center; padding: 60px 20px; color: var(--ink-3); font-size: 13px; }
+
+  /* Friends-specific styles */
+  .fr-action { padding: 6px 14px; border-radius: 99px; border: 1.5px solid var(--border); background: transparent; font-size: 12px; font-weight: 500; color: var(--ink-2); cursor: pointer; transition: all .2s; font-family: var(--sans); }
+  .fr-action:hover { border-color: var(--p); color: var(--p); }
+  .fr-action.danger:hover { border-color: #c44; color: #c44; }
+  .fr-add-section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 20px; }
+  .fr-add-title { font-size: 13px; font-weight: 500; color: var(--ink-2); margin-bottom: 12px; }
+  .fr-add-row { display: flex; gap: 8px; }
+  .fr-search { flex: 1; height: 40px; padding: 0 14px; border-radius: 10px; border: 1.5px solid var(--border); font-family: var(--sans); font-size: 14px; outline: none; background: #fff; }
+  .fr-search:focus { border-color: var(--p); }
+  .fr-suggestions { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; }
+  .fr-suggest-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; cursor: pointer; transition: background .15s; }
+  .fr-suggest-row:hover { background: var(--p-tint); }
+  .fr-suggest-name { flex: 1; font-size: 14px; }
+  .fr-suggest-school { font-size: 11px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .08em; }
+  .fr-add-btn { padding: 6px 12px; border-radius: 8px; border: none; background: var(--p); color: #fff; font-size: 12px; font-weight: 500; cursor: pointer; }
+</style>
+</head>
+<body>
+  <div class="lb-wrap">
+    <a href="/" class="lb-back">← Back to dashboard</a>
+
+    <!-- Page-level tab bar: Leaderboard vs Friends -->
+    <div class="pagebar">
+      <button class="pagebar-tab active" id="pageTabLb" onclick="setPage('leaderboard')">🏆 Leaderboard</button>
+      <button class="pagebar-tab" id="pageTabFr" onclick="setPage('friends')">👥 Friends</button>
+    </div>
+
+    <!-- ── LEADERBOARD VIEW ────────────────────────── -->
+    <div id="viewLeaderboard">
+      <div class="lb-eyebrow" id="lbEyebrow">Leaderboard</div>
+      <h1 class="lb-title">Top of the bites</h1>
+      <p class="lb-sub">Most active eaters this season.</p>
+
+      <div class="lb-tabs">
+        <button class="lb-tab active" id="tabMine" onclick="setScope('mine')">My School</button>
+        <button class="lb-tab" id="tabAll" onclick="setScope('all')">All Schools</button>
+      </div>
+
+      <div class="lb-toggle">
+        <button class="lb-toggle-btn active" id="toggleUsers" onclick="setType('users')">👥 Top Students</button>
+        <button class="lb-toggle-btn" id="toggleRestaurants" onclick="setType('restaurants')">🍽️ Top Restaurants</button>
+      </div>
+
+      <div class="lb-list" id="lbList">
+        <div class="lb-loading">Loading…</div>
+      </div>
+    </div>
+
+    <!-- ── FRIENDS VIEW ────────────────────────────── -->
+    <div id="viewFriends" style="display:none">
+      <div class="lb-eyebrow">Your circle</div>
+      <h1 class="lb-title">Friends</h1>
+      <p class="lb-sub" id="frSub">People you're connected with.</p>
+
+      <!-- Add friend section -->
+      <div class="fr-add-section">
+        <div class="fr-add-title">Add someone new</div>
+        <div class="fr-add-row">
+          <input class="fr-search" id="frSearch" type="text" placeholder="Search by name or email…" oninput="renderSuggestions()">
+        </div>
+        <div class="fr-suggestions" id="frSuggestions"></div>
+      </div>
+
+      <div class="lb-list" id="frList">
+        <div class="lb-loading">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ── Auth + theme (shared by both views) ─────── */
+const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+if (!currentUser) window.location.href = '/';
+
+const THEMES = {
+  columbia: { primary: '#1A6BB5', tint: 'rgba(26,107,181,0.08)', mid: 'rgba(26,107,181,0.18)' },
+  nyu:      { primary: '#8B1DB5', tint: 'rgba(139,29,181,0.08)', mid: 'rgba(139,29,181,0.18)' },
+};
+function applyTheme() {
+  const t = THEMES[currentUser.school] || THEMES.columbia;
+  const r = document.documentElement;
+  r.style.setProperty('--p', t.primary);
+  r.style.setProperty('--p-tint', t.tint);
+  r.style.setProperty('--p-mid', t.mid);
+  document.getElementById('lbEyebrow').textContent = currentUser.school === 'nyu' ? 'NYU LEADERBOARD' : 'COLUMBIA LEADERBOARD';
+}
+applyTheme();
+
+/* ── Page-level tab switching ────────────────── */
+function setPage(p) {
+  document.getElementById('pageTabLb').classList.toggle('active', p === 'leaderboard');
+  document.getElementById('pageTabFr').classList.toggle('active', p === 'friends');
+  document.getElementById('viewLeaderboard').style.display = p === 'leaderboard' ? '' : 'none';
+  document.getElementById('viewFriends').style.display = p === 'friends' ? '' : 'none';
+  if (p === 'friends') loadFriends();
+}
+
+/* ════════════════════════════════════════════════
+   LEADERBOARD
+════════════════════════════════════════════════ */
+let scope = 'mine';
+let type = 'users';
+
+function setScope(s) {
+  scope = s;
+  document.getElementById('tabMine').classList.toggle('active', s === 'mine');
+  document.getElementById('tabAll').classList.toggle('active', s === 'all');
+  loadLeaderboard();
+}
+function setType(t) {
+  type = t;
+  document.getElementById('toggleUsers').classList.toggle('active', t === 'users');
+  document.getElementById('toggleRestaurants').classList.toggle('active', t === 'restaurants');
+  loadLeaderboard();
+}
+
+async function loadLeaderboard() {
+  const list = document.getElementById('lbList');
+  list.innerHTML = '<div class="lb-loading">Loading…</div>';
+
+  const url = type === 'users'
+    ? `/api/leaderboard${scope === 'mine' ? `?school=${currentUser.school}` : ''}`
+    : `/api/leaderboard/restaurants${scope === 'mine' ? `?school=${currentUser.school}` : ''}`;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (!data.length) {
+      list.innerHTML = '<div class="lb-empty">No data yet — go check in somewhere!</div>';
+      return;
+    }
+
+    list.innerHTML = data.map((row, i) => {
+      const isTop = i === 0 ? 'top1' : '';
+      if (type === 'users') {
+        const avatarLetter = (row.name || '?').charAt(0).toUpperCase();
+        const isMe = row.user_id === currentUser.id;
+        return `
+          <div class="lb-row ${isTop}">
+            <div class="lb-rank">${i + 1}</div>
+            <div class="lb-avatar">${avatarLetter}</div>
+            <div class="lb-name">
+              ${row.name || 'Unknown'}${isMe ? ' <span class="lb-school">(you)</span>' : ''}
+              <span class="lb-school">${row.school || ''}</span>
+            </div>
+            <div><span class="lb-count">${row.checkin_count}</span><span class="lb-count-label">check-ins</span></div>
+          </div>`;
+      } else {
+        return `
+          <div class="lb-row ${isTop}">
+            <div class="lb-rank">${i + 1}</div>
+            <div class="lb-avatar">🍽️</div>
+            <div class="lb-name">
+              ${row.restaurant_name || 'Unknown'}
+              <span class="lb-school">${row.school || ''}</span>
+            </div>
+            <div><span class="lb-count">${row.checkin_count}</span><span class="lb-count-label">visits</span></div>
+          </div>`;
+      }
+    }).join('');
+  } catch (err) {
+    console.error(err);
+    list.innerHTML = '<div class="lb-empty">Couldn\'t load leaderboard.</div>';
+  }
+}
+
+/* ════════════════════════════════════════════════
+   FRIENDS
+════════════════════════════════════════════════ */
+let allUsers = [];      // every user in the system, for the "add friend" picker
+let myFriends = [];     // hydrated friend objects for the current user
+
+async function loadFriends() {
+  // Load both lists in parallel
+  document.getElementById('frList').innerHTML = '<div class="lb-loading">Loading…</div>';
+  try {
+    const [friendsRes, allRes] = await Promise.all([
+      fetch(`/api/users/${currentUser.id}/friends`),
+      fetch('/api/users')
+    ]);
+    myFriends = await friendsRes.json();
+    allUsers  = await allRes.json();
+
+    document.getElementById('frSub').textContent =
+      myFriends.length ? `You have ${myFriends.length} friend${myFriends.length === 1 ? '' : 's'}.` : "You haven't added any friends yet.";
+
+    renderFriends();
+    renderSuggestions();
+  } catch (err) {
+    console.error(err);
+    document.getElementById('frList').innerHTML = '<div class="lb-empty">Couldn\'t load friends.</div>';
+  }
+}
+
+function renderFriends() {
+  const list = document.getElementById('frList');
+  if (!myFriends.length) {
+    list.innerHTML = '<div class="lb-empty">No friends yet — add some above! 👆</div>';
+    return;
+  }
+  list.innerHTML = myFriends.map(f => `
+    <div class="lb-row">
+      <div class="lb-avatar">${(f.name || '?').charAt(0).toUpperCase()}</div>
+      <div class="lb-name">
+        ${f.name}
+        <span class="lb-school">${f.school || ''}</span>
+      </div>
+      <button class="fr-action danger" onclick="removeFriend(${f.id})">Remove</button>
+    </div>
+  `).join('');
+}
+
+function renderSuggestions() {
+  const q = (document.getElementById('frSearch').value || '').toLowerCase().trim();
+  const friendIds = new Set(myFriends.map(f => f.id));
+  // Candidates: not me, not already a friend, optional name/email match
+  let candidates = allUsers.filter(u =>
+    u.id !== currentUser.id &&
+    !friendIds.has(u.id) &&
+    (q === '' || u.name.toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q))
+  );
+  candidates = candidates.slice(0, 6);
+
+  const wrap = document.getElementById('frSuggestions');
+  if (!candidates.length) {
+    wrap.innerHTML = q ? '<div class="lb-empty" style="padding:14px;font-size:13px">No matches</div>' : '';
+    return;
+  }
+  wrap.innerHTML = candidates.map(u => `
+    <div class="fr-suggest-row">
+      <div class="lb-avatar">${(u.name || '?').charAt(0).toUpperCase()}</div>
+      <div class="fr-suggest-name">${u.name} <span class="fr-suggest-school">${u.school || ''}</span></div>
+      <button class="fr-add-btn" onclick="addFriend(${u.id})">+ Add</button>
+    </div>
+  `).join('');
+}
+
+async function addFriend(friendId) {
+  try {
+    const res = await fetch(`/api/users/${currentUser.id}/friends`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ friendId })
+    });
+    if (!res.ok) throw new Error('Failed');
+    await loadFriends();
+  } catch (err) {
+    console.error(err);
+    alert('Could not add friend.');
+  }
+}
+
+async function removeFriend(friendId) {
+  if (!confirm('Remove this friend?')) return;
+  try {
+    const res = await fetch(`/api/users/${currentUser.id}/friends/${friendId}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed');
+    await loadFriends();
+  } catch (err) {
+    console.error(err);
+    alert('Could not remove friend.');
+  }
+}
+
+/* ── Initial load ──────────────────────────────── */
+loadLeaderboard();
+</script>
+</body>
+</html>

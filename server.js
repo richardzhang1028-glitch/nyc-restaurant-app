@@ -19,6 +19,9 @@ app.use('/api/restaurants', require('./server/routes/restaurants'));
 app.use('/api/reviews', require('./server/routes/reviews'));
 app.use('/api/favourites', require('./server/routes/favourites'));
 app.use('/api/deals', require('./server/routes/deals'));
+app.use('/api/users', require('./server/routes/users'));
+app.use('/api/checkins', require('./server/routes/checkins'));
+app.use('/api/leaderboard', require('./server/routes/leaderboard'));
 
 // ── Health check ────────────────────────────────────
 app.get('/api/health', (req, res) => {
