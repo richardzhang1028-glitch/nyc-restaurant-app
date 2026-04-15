@@ -4,296 +4,1445 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BITE NYC</title>
-<link rel="stylesheet" href="styles.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#f7f5f0;
+  --surface:#ffffff;
+  --ink:#111111;
+  --ink-2:#555555;
+  --ink-3:#999999;
+  --border:#e5e0d8;
+  --serif:'DM Serif Display', Georgia, serif;
+  --sans:'DM Sans', system-ui, sans-serif;
+  --ease:cubic-bezier(0.16, 1, 0.3, 1);
+  --t:0.45s;
+  --p:#555555;
+  --p-tint:rgba(85,85,85,0.08);
+  --p-mid:rgba(85,85,85,0.18);
+  --nav-h:60px;
+}
+html, body { height:100%; font-family:var(--sans); background:var(--bg); color:var(--ink); -webkit-font-smoothing:antialiased; overflow:hidden; }
+button, input, textarea { font-family:var(--sans); }
+button { cursor:pointer; }
 
+#screenLogin, #screenDashboard {
+  position:fixed;
+  inset:0;
+  transition:opacity .55s var(--ease), transform .55s var(--ease), filter .55s var(--ease);
+}
+#screenDashboard { z-index:5; opacity:1; pointer-events:all; }
+#screenLogin { z-index:20; opacity:0; pointer-events:none; transform:scale(.98); filter:blur(8px); overflow-y:auto; background:var(--surface); }
+#screenLogin.visible { opacity:1; pointer-events:all; transform:scale(1); filter:none; }
+#screenDashboard.login-open { opacity:.18; transform:scale(.98); filter:blur(5px); pointer-events:none; }
+
+.login-page { display:grid; grid-template-columns:1fr 1fr; min-height:100vh; }
+.brand-panel { position:relative; background:var(--p); padding:56px 64px; display:flex; flex-direction:column; justify-content:space-between; overflow:hidden; transition:background var(--t) var(--ease); }
+.brand-panel::before, .brand-panel::after { content:''; position:absolute; border-radius:50%; pointer-events:none; }
+.brand-panel::before { width:520px; height:520px; top:-160px; right:-160px; background:rgba(255,255,255,.06); }
+.brand-panel::after { width:320px; height:320px; bottom:-80px; left:-80px; background:rgba(255,255,255,.04); }
+.brand-logo { display:flex; align-items:center; gap:12px; position:relative; z-index:1; }
+.brand-logo-icon { width:40px; height:40px; border-radius:10px; background:rgba(255,255,255,.15); display:flex; align-items:center; justify-content:center; font-size:20px; }
+.brand-logo-name { font-family:var(--serif); font-size:22px; color:#fff; letter-spacing:-.01em; }
+.brand-hero { position:relative; z-index:1; }
+.brand-hero-eyebrow { font-size:11px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.5); margin-bottom:20px; }
+.brand-hero-title { font-family:var(--serif); font-size:clamp(38px,4vw,54px); line-height:1.05; color:#fff; margin-bottom:20px; }
+.brand-hero-title em { font-style:italic; opacity:.75; }
+.brand-hero-sub { font-size:15px; font-weight:300; color:rgba(255,255,255,.65); line-height:1.7; max-width:360px; }
+.brand-schools { display:flex; gap:10px; position:relative; z-index:1; }
+.school-chip { font-size:12px; font-weight:500; padding:6px 14px; border-radius:99px; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.65); transition:all .25s; }
+.school-chip.active { background:rgba(255,255,255,.18); color:#fff; border-color:rgba(255,255,255,.35); }
+.form-panel { background:var(--surface); padding:56px 72px; display:flex; flex-direction:column; justify-content:center; position:relative; }
+.form-top-bar { position:absolute; top:40px; right:56px; font-size:13px; color:var(--ink-3); }
+.form-top-bar a { color:var(--p); text-decoration:none; font-weight:500; }
+.form-inner { max-width:360px; }
+.form-eyebrow { font-size:11px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); margin-bottom:12px; transition:color var(--t) var(--ease); }
+.form-title { font-family:var(--serif); font-size:36px; line-height:1.1; color:var(--ink); margin-bottom:8px; letter-spacing:-.01em; }
+.form-sub { font-size:14px; font-weight:300; color:var(--ink-2); line-height:1.65; margin-bottom:40px; }
+.input-group { margin-bottom:14px; position:relative; }
+.input-label { display:block; font-size:12px; font-weight:500; letter-spacing:.04em; color:var(--ink-3); margin-bottom:8px; }
+.input-wrap { position:relative; }
+.email-input { width:100%; height:52px; padding:0 16px; padding-right:140px; border:1.5px solid var(--border); border-radius:12px; font-size:15px; color:var(--ink); background:#fff; outline:none; transition:border-color .2s, box-shadow .2s; }
+.email-input:focus { border-color:var(--p); box-shadow:0 0 0 3px var(--p-tint); }
+.email-input.valid { border-color:var(--p); }
+.l-school-badge { position:absolute; right:10px; top:50%; transform:translateY(-50%) translateX(6px); display:flex; align-items:center; gap:6px; background:var(--p-tint); border:1px solid var(--p-mid); border-radius:8px; padding:5px 10px; font-size:12px; font-weight:500; color:var(--p); pointer-events:none; opacity:0; transition:all .25s var(--ease); }
+.l-school-badge.visible { opacity:1; transform:translateY(-50%) translateX(0); }
+.l-school-badge-dot { width:7px; height:7px; border-radius:50%; background:var(--p); }
+.demo-row { display:flex; gap:8px; margin-bottom:28px; flex-wrap:wrap; }
+.demo-label { width:100%; font-size:11px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3); margin-bottom:-2px; }
+.demo-btn { font-size:12px; font-weight:500; padding:6px 14px; border-radius:8px; border:1.5px solid var(--border); background:transparent; color:var(--ink-2); transition:all .2s; display:flex; align-items:center; gap:6px; }
+.demo-btn:hover { border-color:var(--p); color:var(--p); background:var(--p-tint); }
+.demo-btn-dot { width:8px; height:8px; border-radius:50%; }
+.submit-btn { width:100%; height:52px; border-radius:12px; border:none; background:var(--p); color:#fff; font-size:15px; font-weight:500; display:flex; align-items:center; justify-content:center; gap:8px; transition:background var(--t) var(--ease), transform .15s, box-shadow .2s, opacity .2s; }
+.submit-btn:not(:disabled):hover { transform:translateY(-1px); box-shadow:0 8px 24px rgba(0,0,0,.18); }
+.submit-btn:disabled { background:#e0ddd8; color:#aaa; cursor:not-allowed; }
+.or-row { display:flex; align-items:center; gap:12px; margin:20px 0; color:var(--ink-3); font-size:12px; }
+.or-line { flex:1; height:1px; background:var(--border); }
+.sso-row { display:flex; gap:10px; }
+.sso-btn { flex:1; height:46px; border-radius:10px; border:1.5px solid var(--border); background:#fff; font-size:13px; font-weight:500; color:var(--ink-2); display:flex; align-items:center; justify-content:center; gap:8px; transition:border-color .2s, background .2s; }
+.sso-btn:hover { border-color:var(--ink-3); background:var(--bg); }
+.sso-icon { width:18px; height:18px; }
+.terms { margin-top:24px; font-size:12px; color:var(--ink-3); line-height:1.6; }
+.terms a { color:var(--ink-2); text-decoration:none; border-bottom:1px solid var(--border); }
+@keyframes fadeUp { from{opacity:0; transform:translateY(14px)} to{opacity:1; transform:translateY(0)} }
+.form-inner > * { opacity:0; animation:fadeUp .5s var(--ease) forwards; }
+.form-eyebrow{animation-delay:.05s}.form-title{animation-delay:.12s}.form-sub{animation-delay:.18s}.input-group{animation-delay:.24s}.demo-row{animation-delay:.30s}.submit-btn{animation-delay:.36s}.or-row{animation-delay:.40s}.sso-row{animation-delay:.44s}.terms{animation-delay:.48s}
+
+.nav { position:fixed; top:0; left:0; right:0; height:var(--nav-h); background:rgba(255,255,255,.95); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 24px; gap:20px; z-index:300; }
+.nav-logo { display:flex; align-items:center; gap:9px; text-decoration:none; cursor:pointer; }
+.nav-logo-icon { width:32px; height:32px; border-radius:8px; background:var(--p); display:flex; align-items:center; justify-content:center; font-size:16px; transition:background .4s; }
+.nav-logo-name { font-family:var(--serif); font-size:17px; color:var(--ink); letter-spacing:-.01em; white-space:nowrap; }
+.nav-tabs { display:flex; gap:2px; background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:3px; }
+.nav-tab { padding:5px 14px; border-radius:7px; font-size:13px; font-weight:500; color:var(--ink-3); border:none; background:none; transition:all .2s; display:flex; align-items:center; gap:6px; }
+.nav-tab.active { background:var(--surface); color:var(--ink); box-shadow:0 1px 4px rgba(0,0,0,.08); }
+.nav-spacer { flex:1; }
+.nav-right { display:flex; align-items:center; gap:10px; }
+.signin-btn { height:36px; padding:0 16px; border-radius:8px; border:1.5px solid var(--border); background:#fff; color:var(--ink); font-size:13px; font-weight:600; transition:all .2s; }
+.signin-btn:hover { border-color:var(--p); color:var(--p); background:var(--p-tint); }
+.nav-school-badge { display:none; font-size:12px; font-weight:500; padding:4px 12px; border-radius:99px; background:var(--p-tint); color:var(--p); border:1px solid var(--p-mid); }
+.nav-avatar { display:none; width:32px; height:32px; border-radius:50%; background:var(--p); align-items:center; justify-content:center; font-size:13px; font-weight:500; color:#fff; transition:background .4s; }
+body.is-auth .signin-btn { display:none; }
+body.is-auth .nav-school-badge { display:block; }
+body.is-auth .nav-avatar { display:flex; }
+.account-wrap { position:relative; display:flex; align-items:center; gap:10px; }
+.account-wrap .nav-school-badge,
+.account-wrap .nav-avatar { cursor:pointer; }
+.account-menu {
+  position:absolute;
+  top:44px;
+  right:0;
+  width:220px;
+  background:rgba(255,255,255,.98);
+  border:1px solid var(--border);
+  border-radius:12px;
+  box-shadow:0 14px 38px rgba(0,0,0,.14);
+  padding:10px;
+  opacity:0;
+  transform:translateY(-8px);
+  pointer-events:none;
+  transition:opacity .2s var(--ease), transform .2s var(--ease);
+  z-index:500;
+}
+.account-menu.open { opacity:1; transform:translateY(0); pointer-events:all; }
+.account-user { padding:8px 10px 10px; border-bottom:1px solid var(--border); margin-bottom:6px; }
+.account-name { font-size:14px; font-weight:700; color:var(--ink); }
+.account-meta { font-size:12px; color:var(--ink-3); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.account-menu-btn {
+  width:100%;
+  height:36px;
+  border:0;
+  background:transparent;
+  border-radius:8px;
+  text-align:left;
+  padding:0 10px;
+  font-size:13px;
+  font-weight:600;
+  color:var(--ink-2);
+}
+.account-menu-btn:hover { background:var(--bg); color:var(--ink); }
+.account-menu-btn.danger:hover { background:#fef2f2; color:#dc2626; }
+
+.dash-main { position:fixed; inset:0; overflow:hidden; pointer-events:none; }
+.map-stage { position:fixed; inset:0; z-index:1; background:var(--bg); pointer-events:all; }
+#map { width:100%; height:100%; pointer-events:auto; transition:filter .6s var(--ease), opacity .6s var(--ease); }
+body.view-home #map, body.view-favourites #map { filter:none; opacity:1; }
+body.view-detail #map { filter:none; opacity:1; }
+body.view-login #map { filter:grayscale(1) blur(3px); opacity:.28; }
+.map-controls { position:absolute; top:16px; right:16px; z-index:170; display:flex; flex-direction:column; gap:4px; opacity:0; transform:translateY(-8px); pointer-events:none; transition:opacity .35s var(--ease) .2s, transform .35s var(--ease) .2s; }
+body.view-detail .map-controls { opacity:1; transform:translateY(0); pointer-events:all; }
+.map-ctrl-btn { width:36px; height:36px; background:white; border:1px solid var(--border); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:17px; color:var(--ink-2); box-shadow:0 2px 8px rgba(0,0,0,.08); user-select:none; }
+.map-ctrl-btn:hover { background:var(--bg); }
+.detail-back { position:absolute; top:16px; left:16px; z-index:170; height:38px; padding:0 16px; border-radius:8px; border:1px solid rgba(255,255,255,.8); background:rgba(255,255,255,.94); color:var(--ink); font-size:13px; font-weight:600; box-shadow:0 4px 18px rgba(0,0,0,.10); opacity:0; transform:translateY(-8px); pointer-events:none; transition:opacity .35s var(--ease) .2s, transform .35s var(--ease) .2s; }
+body.view-detail .detail-back { opacity:1; transform:translateY(0); pointer-events:all; }
+.deal-strip { position:fixed; bottom:22px; left:50%; width:min(1200px, calc(100vw - 48px)); transform:translateX(-50%); z-index:12; display:flex; gap:10px; overflow-x:auto; padding-bottom:2px; pointer-events:none; transition:opacity .35s var(--ease), transform .35s var(--ease); }
+body.view-detail .deal-strip, body.view-login .deal-strip { opacity:0; transform:translateX(-50%) translateY(20px); pointer-events:none; }
+.deal-strip::-webkit-scrollbar { display:none; }
+.deal-card { flex-shrink:0; background:rgba(255,255,255,.96); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,.8); border-radius:14px; padding:12px 16px; display:flex; align-items:center; gap:10px; box-shadow:0 4px 20px rgba(0,0,0,.10); pointer-events:all; min-width:210px; max-width:260px; transition:transform .18s, box-shadow .18s; }
+.deal-card:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(0,0,0,.13); }
+.deal-icon { width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.deal-icon.deal { background:#fef3c7; }
+.deal-icon.free { background:#ecfdf5; }
+.deal-icon.event { background:#ede9fe; }
+.deal-body { min-width:0; }
+.deal-label { font-size:10px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3); margin-bottom:2px; }
+.deal-title { font-size:13px; font-weight:500; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.deal-time { font-size:11px; color:var(--ink-3); margin-top:1px; }
+
+.floating-panel { position:fixed; top:80px; left:50%; z-index:10; width:min(1200px, calc(100vw - 48px)); max-height:calc(100vh - 150px); display:flex; flex-direction:column; background:rgba(255,255,255,.92); backdrop-filter:blur(20px); border:1px solid var(--border); border-radius:24px; box-shadow:0 16px 48px rgba(0,0,0,.12); overflow:hidden; opacity:0; transform:translateX(-50%) scale(.98) translateY(12px); pointer-events:none; transition:opacity .5s var(--ease), transform .5s var(--ease); }
+body.view-home .home-panel, body.view-favourites .favourites-panel { opacity:1; transform:translateX(-50%) scale(1) translateY(0); pointer-events:all; }
+body.view-detail .home-panel, body.view-detail .favourites-panel { opacity:0; transform:translateX(-50%) scale(.95) translateY(20px); pointer-events:none; }
+.panel-head { padding:22px 22px 12px; }
+.panel-eyebrow { font-size:11px; font-weight:700; letter-spacing:.13em; text-transform:uppercase; color:var(--p); margin-bottom:8px; }
+.panel-title { font-family:var(--serif); font-size:30px; line-height:1.05; letter-spacing:-.01em; color:var(--ink); }
+.panel-sub { margin-top:6px; font-size:13px; color:var(--ink-3); line-height:1.5; }
+.panel-search { margin-top:16px; position:relative; }
+.panel-search input { width:100%; height:44px; padding:0 14px 0 38px; border:1.5px solid var(--border); border-radius:12px; background:var(--bg); color:var(--ink); font-size:14px; outline:none; transition:border-color .2s, box-shadow .2s, background .2s; }
+.panel-search input:focus { border-color:var(--p); box-shadow:0 0 0 3px var(--p-tint); background:#fff; }
+.panel-search svg { position:absolute; left:13px; top:50%; transform:translateY(-50%); width:15px; height:15px; opacity:.38; pointer-events:none; }
+.mood-row, .filter-row { display:flex; gap:6px; flex-wrap:wrap; padding:0 22px 12px; flex-shrink:0; }
+.filter-row { padding-top:2px; }
+.mood-chip, .filter-chip, .fav-list-chip { font-size:12px; font-weight:500; padding:6px 12px; border-radius:99px; border:1.5px solid var(--border); background:#fff; color:var(--ink-2); transition:all .18s; white-space:nowrap; }
+.filter-chip, .fav-list-chip { font-size:11px; padding:5px 10px; }
+.mood-chip:hover, .filter-chip:hover, .fav-list-chip:hover { border-color:var(--p); color:var(--p); background:var(--p-tint); }
+.mood-chip.active, .filter-chip.active, .fav-list-chip.active { background:var(--p); color:#fff; border-color:var(--p); }
+.sidebar-toggle { display:flex; gap:4px; margin:0; background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:4px; flex-shrink:0; }
+.stoggle-btn { flex:1; min-width:96px; padding:8px 12px; border-radius:8px; font-size:13px; font-weight:700; color:var(--ink-3); border:none; background:none; transition:all .2s var(--ease); display:flex; align-items:center; justify-content:center; gap:5px; }
+.stoggle-btn.active { background:var(--surface); color:var(--ink); box-shadow:0 2px 8px rgba(0,0,0,.08); }
+.rest-list { flex:1; overflow-y:auto; padding:16px 24px 24px; display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px; align-content:start; }
+.rest-list::-webkit-scrollbar, .detail-sheet::-webkit-scrollbar, .favourites-list::-webkit-scrollbar { width:4px; }
+.rest-list::-webkit-scrollbar-thumb, .detail-sheet::-webkit-scrollbar-thumb, .favourites-list::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+.rest-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; cursor:pointer; transition:background .15s, transform .2s var(--ease), border-color .18s, box-shadow .2s var(--ease); position:relative; margin-bottom:0; animation:restFadeUp .35s var(--ease) both; min-height:150px; }
+.rest-card:hover { background:var(--surface); transform:translateY(-4px); box-shadow:0 12px 32px rgba(0,0,0,.12); }
+.rest-card.active { background:var(--p-tint); border-color:var(--p-mid); }
+.rest-card.pressed { transform:scale(.97); }
+.rest-card-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:5px; gap:10px; }
+.rest-card-name { font-size:15px; font-weight:600; color:var(--ink); line-height:1.2; }
+.rest-card-price { font-size:13px; font-weight:600; color:var(--ink-3); flex-shrink:0; }
+.rest-card-meta { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--ink-3); margin-bottom:8px; }
+.rest-card-dot { width:3px; height:3px; border-radius:50%; background:var(--border); }
+.rest-card-rating { display:flex; align-items:center; gap:3px; color:var(--ink-2); font-weight:500; }
+.star { color:#f59e0b; font-size:11px; }
+.rest-card-tags { display:flex; gap:5px; flex-wrap:wrap; }
+.rest-tag { font-size:11px; font-weight:500; padding:2px 8px; border-radius:5px; background:var(--bg); color:var(--ink-3); border:1px solid var(--border); }
+.checkin-badge { position:absolute; top:12px; right:12px; font-size:10px; font-weight:500; padding:2px 7px; border-radius:99px; background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; }
+.empty-state { padding:28px 18px; text-align:center; color:var(--ink-3); font-size:14px; line-height:1.6; }
+.empty-state strong { display:block; font-family:var(--serif); font-size:22px; color:var(--ink); margin-bottom:6px; font-weight:400; }
+
+
+.detail-sheet { position:fixed; left:50%; bottom:0; z-index:165; width:min(560px, calc(100vw - 48px)); max-height:70vh; overflow-y:auto; background:rgba(255,255,255,.98); backdrop-filter:blur(20px); border:1px solid var(--border); border-bottom:none; border-radius:24px 24px 0 0; box-shadow:0 -12px 40px rgba(0,0,0,.15); transform:translateX(-50%) translateY(100%); opacity:1; transition:transform .5s var(--ease); pointer-events:none; }
+body.view-detail .detail-sheet { transform:translate(-50%, 0); opacity:1; pointer-events:all; }
+.sheet-handle { width:44px; height:4px; border-radius:99px; background:#d8d2c8; margin:12px auto 10px; }
+.detail-hero { margin:0 18px; min-height:140px; border-radius:16px; overflow:hidden; position:relative; background-size:cover; background-position:center; background-image:linear-gradient(135deg, rgba(17,17,17,.2), rgba(17,17,17,.55)), url('https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80'); }
+.fav-hero-btn { position:absolute; top:12px; right:12px; width:42px; height:42px; border-radius:50%; border:1px solid rgba(255,255,255,.75); background:rgba(255,255,255,.92); color:var(--ink); display:flex; align-items:center; justify-content:center; font-size:20px; box-shadow:0 6px 20px rgba(0,0,0,.14); }
+.fav-hero-btn.saved { background:var(--p); color:#fff; border-color:var(--p); }
+.detail-content { padding:18px 22px 22px; }
+.detail-kicker { font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--p); margin-bottom:6px; }
+.detail-title-row { display:flex; justify-content:space-between; align-items:flex-start; gap:18px; margin-bottom:12px; }
+.detail-name { font-family:var(--serif); font-size:32px; line-height:1.03; color:var(--ink); }
+.quick-overview { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin:12px 0 18px; }
+.overview-item { border:1px solid var(--border); border-radius:12px; background:var(--bg); padding:10px; }
+.overview-label { font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3); margin-bottom:3px; }
+.overview-value { font-size:14px; font-weight:700; color:var(--ink); }
+.detail-section { margin-bottom:18px; }
+.detail-section-label { font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3); margin-bottom:8px; }
+.detail-desc { font-size:14px; color:var(--ink-2); line-height:1.65; }
+.detail-tags { display:flex; gap:6px; flex-wrap:wrap; }
+.detail-tag { font-size:12px; font-weight:500; padding:5px 10px; border-radius:7px; background:var(--bg); color:var(--ink-2); border:1px solid var(--border); }
+.address-line { font-size:14px; color:var(--ink-2); line-height:1.55; }
+.review-form { display:flex; gap:8px; align-items:flex-start; }
+.rating-picker { display:flex; align-items:center; gap:4px; margin-bottom:10px; }
+.rating-star { font-size:24px; color:#d8d2c8; cursor:pointer; transition:color .15s, transform .15s; user-select:none; }
+.rating-star:hover { transform:scale(1.15); }
+.rating-star.filled { color:#f59e0b; }
+.rating-label { font-size:12px; color:var(--ink-3); margin-left:8px; }
+.review-input { flex:1; min-height:44px; resize:vertical; max-height:110px; border:1.5px solid var(--border); border-radius:12px; padding:11px 12px; outline:none; font-size:13px; color:var(--ink); }
+.review-input:focus { border-color:var(--p); box-shadow:0 0 0 3px var(--p-tint); }
+.review-submit, .checkin-btn { height:44px; border-radius:8px; border:none; background:var(--p); color:#fff; font-size:13px; font-weight:700; padding:0 16px; }
+.review-list { display:grid; gap:8px; }
+.review-item { padding:10px 12px; border-radius:12px; border:1px solid var(--border); background:var(--bg); }
+.review-author { font-size:12px; font-weight:700; color:var(--ink); margin-bottom:3px; }
+.review-text { font-size:13px; color:var(--ink-2); line-height:1.45; }
+.detail-actions { display:flex; gap:10px; padding-top:2px; }
+.checkin-btn { flex:1; }
+.checkin-btn.checked { background:#059669; }
+
+.favourites-panel { width:min(1200px, calc(100vw - 48px)); }
+.fav-tabs { display:flex; gap:6px; flex-wrap:wrap; padding:0 22px 12px; }
+.favourites-list { flex:1; overflow-y:auto; padding:16px 24px 24px; display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px; align-content:start; }
+.fav-item { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:18px; border-radius:16px; border:1px solid var(--border); background:var(--surface); cursor:pointer; transition:transform .2s var(--ease), box-shadow .2s var(--ease); }
+.fav-item:hover { transform:translateY(-4px); box-shadow:0 12px 32px rgba(0,0,0,.12); }
+.fav-name { font-size:15px; font-weight:700; color:var(--ink); margin-bottom:3px; }
+.fav-meta { font-size:12px; color:var(--ink-3); }
+.fav-remove { width:30px; height:30px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--ink-3); flex-shrink:0; }
+.fav-remove:hover { border-color:#fecaca; background:#fef2f2; color:#dc2626; }
+
+.leaflet-control-zoom { display:none; }
+.leaflet-popup-content-wrapper { border-radius:12px!important; box-shadow:0 8px 30px rgba(0,0,0,.12)!important; border:1px solid var(--border)!important; padding:0!important; }
+.leaflet-popup-content { margin:0!important; width:auto!important; }
+.leaflet-popup-tip-container, .leaflet-popup-close-button { display:none!important; }
+.map-popup { padding:14px 16px; min-width:180px; cursor:pointer; font-family:var(--sans); }
+.map-popup-name { font-size:14px; font-weight:600; color:var(--ink); margin-bottom:3px; }
+.map-popup-sub { font-size:12px; color:var(--ink-3); display:flex; align-items:center; gap:6px; }
+.marker-pin { border-radius:50% 50% 50% 0; border:2px solid #fff; box-shadow:0 3px 10px rgba(0,0,0,.18); transform:rotate(-45deg); transition:all .25s; position:relative; }
+.marker-pin.active { border-width:4px; box-shadow:0 10px 30px rgba(0,0,0,.34); filter:saturate(1.2) brightness(.92); animation:markerPulse 1.4s var(--ease) infinite; }
+@keyframes markerPulse { 0%,100%{filter:drop-shadow(0 0 0 rgba(17,17,17,0))} 50%{filter:drop-shadow(0 0 8px var(--p-mid))} }
+.toast { position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(12px); background:var(--ink); color:#fff; font-size:13px; font-weight:500; padding:10px 20px; border-radius:99px; z-index:999; opacity:0; transition:opacity .25s, transform .25s var(--ease); pointer-events:none; white-space:nowrap; }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+@keyframes restFadeUp { from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:translateY(0)} }
+
+@media(min-width:1200px) {
+  .rest-list { grid-template-columns:repeat(3, 1fr); }
+  .favourites-list { grid-template-columns:repeat(3, 1fr); }
+}
+
+@media(min-width:1024px) {
+  .detail-sheet {
+    top:var(--nav-h);
+    right:0;
+    bottom:0;
+    left:auto;
+    width:min(440px, 38vw);
+    max-height:none;
+    border-radius:24px 0 0 24px;
+    border:1px solid var(--border);
+    border-right:none;
+    box-shadow:-14px 0 42px rgba(0,0,0,.14);
+    transform:translateX(110%);
+    transition:transform .5s var(--ease);
+  }
+  body.view-detail .detail-sheet {
+    transform:translateX(0);
+    pointer-events:all;
+  }
+  body.view-detail .detail-back-btn {
+    left:24px;
+  }
+  body.view-detail .detail-nav-btn.next {
+    right:calc(min(440px, 38vw) + 24px);
+  }
+  body.view-detail .map-controls {
+    right:calc(min(440px, 38vw) + 16px);
+  }
+}
+
+@media(min-width:768px) and (max-width:1199px) {
+  .floating-panel {
+    width:calc(100vw - 32px);
+    top:76px;
+    max-height:calc(100vh - 146px);
+  }
+  .rest-list { grid-template-columns:repeat(2, 1fr); }
+  .favourites-list { grid-template-columns:repeat(2, 1fr); }
+}
+
+@media(max-width:767px) {
+  .login-page { grid-template-columns:1fr; }
+  .brand-panel { display:none; }
+  .form-panel { padding:48px 32px; }
+  .form-inner { max-width:100%; }
+  .nav { padding:0 14px; gap:10px; }
+  .nav-tabs { margin-left:auto; }
+  .nav-tab { padding:5px 10px; }
+  .nav-logo-name { display:none; }
+  .floating-panel {
+    top:68px;
+    width:calc(100vw - 16px);
+    max-height:calc(100vh - 138px);
+    border-radius:16px;
+  }
+  .panel-head { padding:18px 18px 10px; }
+  .mood-row, .filter-row { padding-left:18px; padding-right:18px; }
+  .sidebar-toggle { margin-left:18px; margin-right:18px; }
+  .rest-list { grid-template-columns:1fr; padding:14px 18px 20px; }
+  .favourites-list { grid-template-columns:1fr; padding:14px 18px 20px; }
+  body.view-detail .home-panel {
+    opacity:0;
+    transform:translateX(-50%) scale(.95) translateY(20px);
+    pointer-events:none;
+  }
+  .detail-sheet {
+    width:calc(100vw - 16px);
+    max-height:76vh;
+    border-radius:16px 16px 0 0;
+  }
+  .quick-overview { grid-template-columns:1fr 1fr 1fr; }
+  .detail-name { font-size:28px; }
+}
+
+/* ==================== HOME — INDEPENDENT FLOATING CARDS ==================== */
+.home-container {
+  position:fixed;
+  top:var(--nav-h);
+  left:0;
+  right:0;
+  bottom:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  z-index:10;
+  padding:24px 24px 140px;
+  pointer-events:all;
+  opacity:1;
+  transform:translateY(0);
+  transition:opacity .5s var(--ease), transform .5s var(--ease);
+}
+.home-container::-webkit-scrollbar { width:6px; }
+.home-container::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+body.view-detail .home-container,
+body.view-favourites .home-container,
+body.view-login .home-container {
+  opacity:0;
+  pointer-events:none;
+  transform:translateY(20px);
+}
+
+.home-section {
+  max-width:1200px;
+  margin:0 auto 20px;
+  background:rgba(255,255,255,0.92);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--border);
+  border-radius:20px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.08);
+  padding:24px 26px;
+  pointer-events:all;
+}
+
+.home-hero .panel-eyebrow { margin-bottom:8px; }
+.home-hero .panel-title {
+  font-family:var(--serif);
+  font-size:32px;
+  line-height:1.05;
+  letter-spacing:-.01em;
+  color:var(--ink);
+}
+.home-hero .panel-sub { margin-top:6px; font-size:13px; color:var(--ink-3); line-height:1.5; }
+.home-hero .panel-search { margin-top:18px; }
+
+.home-filters-row {
+  display:block;
+  max-width:1200px;
+  margin:0 auto 20px;
+}
+.home-filters-row .home-section { margin:0; padding:20px 22px; }
+
+.filter-label {
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--ink-3);
+  margin-bottom:10px;
+}
+.filter-group + .filter-group { margin-top:14px; }
+.filter-group .mood-row,
+.filter-group .filter-row {
+  padding:0;
+  margin-bottom:4px;
+}
+
+.toggle-card { display:flex; flex-direction:column; gap:16px; }
+.toggle-card .sidebar-toggle { margin:0; }
+.ranking-group .filter-label { color:var(--ink-2); }
+.filter-groups {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+}
+.filter-groups .mood-row,
+.filter-groups .filter-row {
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+
+.rest-section { padding:24px 26px 26px; }
+.rest-section .section-title {
+  font-family:var(--serif);
+  font-size:24px;
+  letter-spacing:-.01em;
+  color:var(--ink);
+  margin-bottom:16px;
+}
+.rest-section .rest-list {
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));
+  gap:16px;
+  padding:0;
+  overflow:visible;
+}
+
+@media (min-width:1200px) {
+  .rest-section .rest-list { grid-template-columns:repeat(3, 1fr); }
+}
+@media (max-width:1023px) {
+  .filter-groups { grid-template-columns:1fr; }
+  .rest-section .rest-list { grid-template-columns:repeat(2, 1fr); }
+}
+@media (max-width:640px) {
+  .home-container { padding:16px 14px 140px; }
+  .home-section { border-radius:16px; padding:18px 20px; }
+  .rest-section { padding:20px; }
+  .rest-section .rest-list { grid-template-columns:1fr; }
+  .home-hero .panel-title { font-size:26px; }
+}
+
+/* Login close button */
+.login-close-btn {
+  position:fixed;
+  top:18px;
+  right:22px;
+  z-index:30;
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  border:1px solid var(--border);
+  background:#fff;
+  font-size:22px;
+  line-height:1;
+  color:var(--ink-2);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 4px 18px rgba(0,0,0,.10);
+  transition:color .2s, border-color .2s, transform .15s;
+}
+.login-close-btn:hover { color:var(--ink); border-color:var(--ink-3); transform:scale(1.05); }
+
+/* ==================== MAP MODE ==================== */
+body.view-map #map { filter:none; opacity:1; }
+body.view-map .home-container,
+body.view-map .favourites-panel,
+body.view-map .deal-strip {
+  opacity:0;
+  pointer-events:none;
+}
+body.view-map .home-container *,
+body.view-map .favourites-panel *,
+body.view-map .deal-strip *,
+body.view-detail .home-container *,
+body.view-detail .favourites-panel *,
+body.view-home .favourites-panel *,
+body.view-favourites .home-container * {
+  pointer-events:none !important;
+}
+body.view-map .map-controls {
+  opacity:1;
+  transform:translateY(0);
+  pointer-events:all;
+}
+
+.map-search-card {
+  position:fixed;
+  top:calc(var(--nav-h) + 16px);
+  left:50%;
+  transform:translateX(-50%) translateY(-12px);
+  z-index:160;
+  width:min(760px, calc(100vw - 32px));
+  background:rgba(255,255,255,0.96);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--border);
+  border-radius:16px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.12);
+  padding:14px 16px;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .35s var(--ease), transform .35s var(--ease);
+}
+body.view-map .map-search-card {
+  opacity:1;
+  pointer-events:all;
+  transform:translateX(-50%) translateY(0);
+}
+.map-search-card .panel-search { margin:0; }
+.map-search-card .panel-search input { height:42px; background:#fff; }
+.map-filter-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px 14px; margin-top:12px; }
+.map-filter-group { min-width:0; }
+.map-filter-group.full { grid-column:1 / -1; }
+.map-search-card .filter-label { margin-bottom:6px; font-size:10px; }
+.map-search-card .sidebar-toggle { margin:0; display:flex; flex-wrap:wrap; padding:4px; width:100%; }
+.map-search-card .stoggle-btn { flex:1 1 auto; min-width:78px; }
+.map-search-card .mood-row,
+.map-search-card .filter-row { padding:0; gap:6px; display:flex; flex-wrap:wrap; }
+.map-search-card .mood-chip,
+.map-search-card .filter-chip { white-space:nowrap; }
+body.view-map .dash-main,
+body.view-map .map-stage,
+body.view-detail .dash-main,
+body.view-detail .map-stage { pointer-events:all; }
+
+@media(max-width:767px) {
+  .map-search-card {
+    top:calc(var(--nav-h) + 10px);
+    width:calc(100vw - 16px);
+    max-height:42vh;
+    overflow-y:auto;
+    padding:12px;
+  }
+  .map-filter-grid { grid-template-columns:1fr; gap:9px; }
+  .map-search-card .stoggle-btn { min-width:70px; }
+}
+
+/* ==================== USER LOCATION MARKER ==================== */
+.user-marker .user-dot {
+  width:16px; height:16px;
+  background:#3b82f6;
+  border:3px solid #fff;
+  border-radius:50%;
+  box-shadow:0 0 0 8px rgba(59,130,246,0.2), 0 2px 8px rgba(0,0,0,0.2);
+  animation:userPulse 2.4s var(--ease) infinite;
+}
+@keyframes userPulse {
+  0%,100% { box-shadow:0 0 0 8px rgba(59,130,246,0.2), 0 2px 8px rgba(0,0,0,0.2); }
+  50% { box-shadow:0 0 0 14px rgba(59,130,246,0.08), 0 2px 8px rgba(0,0,0,0.2); }
+}
+
+/* ==================== LOCATION REQUEST MODAL ==================== */
+.location-modal {
+  position:fixed; inset:0;
+  background:rgba(17,17,17,0.5);
+  backdrop-filter:blur(6px);
+  z-index:500;
+  display:none;
+  align-items:center; justify-content:center;
+  padding:20px;
+  opacity:0;
+  transition:opacity .25s var(--ease);
+}
+.location-modal.visible { display:flex; opacity:1; }
+.location-modal-content {
+  background:#fff;
+  border-radius:20px;
+  padding:32px 28px;
+  max-width:380px;
+  width:100%;
+  text-align:center;
+  box-shadow:0 24px 60px rgba(0,0,0,0.25);
+  transform:scale(.94);
+  transition:transform .3s var(--ease);
+}
+.location-modal.visible .location-modal-content { transform:scale(1); }
+.location-icon {
+  width:64px; height:64px; margin:0 auto 18px;
+  border-radius:50%;
+  background:var(--p-tint);
+  display:flex; align-items:center; justify-content:center;
+  font-size:30px;
+}
+.location-modal h3 {
+  font-family:var(--serif); font-size:24px; color:var(--ink);
+  margin-bottom:10px; font-weight:400;
+}
+.location-modal p {
+  font-size:14px; color:var(--ink-2);
+  line-height:1.55; margin-bottom:24px;
+}
+.location-modal-actions { display:flex; flex-direction:column; gap:8px; }
+.location-modal-actions .btn-primary {
+  height:46px; border-radius:12px; border:none;
+  background:var(--p); color:#fff; font-size:14px; font-weight:600;
+  transition:transform .15s, box-shadow .2s;
+}
+.location-modal-actions .btn-primary:hover { transform:translateY(-1px); box-shadow:0 8px 20px rgba(0,0,0,.15); }
+.location-modal-actions .btn-secondary {
+  height:42px; border-radius:12px; border:none;
+  background:transparent; color:var(--ink-3); font-size:13px; font-weight:500;
+}
+.location-modal-actions .btn-secondary:hover { color:var(--ink-2); }
+
+/* ==================== IMPROVED BACK BUTTON ==================== */
+.detail-back-btn {
+  position:fixed;
+  top:calc(var(--nav-h) + 16px);
+  left:24px;
+  z-index:200;
+  height:44px;
+  padding:0 20px;
+  border-radius:22px;
+  background:rgba(255,255,255,0.95);
+  backdrop-filter:blur(12px);
+  border:1px solid var(--border);
+  box-shadow:0 4px 20px rgba(0,0,0,0.12);
+  display:flex; align-items:center; gap:8px;
+  font-size:14px; font-weight:600; color:var(--ink);
+  cursor:pointer;
+  opacity:0;
+  transform:translateX(-20px);
+  pointer-events:none;
+  transition:opacity .3s var(--ease), transform .3s var(--ease), background .2s;
+}
+body.view-detail .detail-back-btn {
+  opacity:1; transform:translateX(0); pointer-events:all;
+}
+.detail-back-btn:hover { background:#fff; transform:translateX(-4px); }
+.detail-back-btn .back-icon { font-size:18px; line-height:1; }
+
+/* ==================== DETAIL PREV/NEXT NAV ==================== */
+.detail-nav-btn {
+  position:fixed;
+  top:50%;
+  z-index:180;
+  width:48px; height:48px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.95);
+  backdrop-filter:blur(12px);
+  border:1px solid var(--border);
+  box-shadow:0 4px 20px rgba(0,0,0,0.12);
+  display:flex; align-items:center; justify-content:center;
+  font-size:26px; line-height:1; color:var(--ink);
+  cursor:pointer;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .3s var(--ease), transform .3s var(--ease), background .2s;
+}
+.detail-nav-btn.prev { left:24px; transform:translateY(-50%) translateX(-20px); }
+.detail-nav-btn.next { right:24px; transform:translateY(-50%) translateX(20px); }
+body.view-detail .detail-nav-btn { opacity:1; pointer-events:all; }
+body.view-detail .detail-nav-btn.prev { transform:translateY(-50%) translateX(0); }
+body.view-detail .detail-nav-btn.next { transform:translateY(-50%) translateX(0); }
+.detail-nav-btn.prev:hover { background:#fff; transform:translateY(-50%) translateX(-4px) scale(1.06); }
+.detail-nav-btn.next:hover { background:#fff; transform:translateY(-50%) translateX(4px) scale(1.06); }
+.detail-nav-btn:disabled { opacity:0.3 !important; cursor:not-allowed; pointer-events:none; }
+@media (max-width: 768px) { .detail-nav-btn { display:none; } }
+
+/* ==================== GET DIRECTIONS BUTTON ==================== */
+.navigate-btn {
+  flex:1;
+  height:44px; border-radius:8px; border:none;
+  background:#3b82f6; color:#fff;
+  font-size:13px; font-weight:700; padding:0 16px;
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  transition:background .2s, transform .15s;
+}
+.navigate-btn:hover { background:#2563eb; transform:translateY(-1px); }
+
+/* Hide old detail-back since we replaced it */
+.detail-back { display:none !important; }
+
+</style>
 </head>
-<body>
-
-<!-- ════════════════════════════════════════
-  SCREEN 1: LOGIN
-════════════════════════════════════════ -->
-<div id="screenLogin">
-  <div class="login-page">
-
-    <!-- Left brand -->
-    <div class="brand-panel" id="brandPanel">
-      <div class="brand-logo">
-        <div class="brand-logo-icon">🍜</div>
-        <div class="brand-logo-name">BITE NYC</div>
+<body class="view-home">
+<div id="screenDashboard">
+  <nav class="nav">
+    <div class="nav-logo" onclick="goHome()">
+      <div class="nav-logo-icon" id="navLogoIcon">🍜</div>
+      <div class="nav-logo-name">BITE NYC</div>
+    </div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" id="tabDiscover" onclick="setView('home')">Discover</button>
+      <button class="nav-tab" id="tabMap" onclick="setView('map')">Map</button>
+      <button class="nav-tab" id="tabFavourites" onclick="setView('favourites')">Favourites</button>
+      <button class="nav-tab" id="tabSocial" onclick="window.location.href='/leaderboard.html'">Social</button>
+    </div>
+    <div class="nav-spacer"></div>
+    <div class="nav-right">
+      <button class="signin-btn" id="signInBtn" onclick="openLogin()">Sign In</button>
+      <div class="account-wrap" id="accountWrap">
+        <div class="nav-school-badge" id="navSchoolBadge" onclick="toggleAccountMenu()">Columbia</div>
+        <div class="nav-avatar" id="navAvatar" onclick="toggleAccountMenu()">E</div>
+        <div class="account-menu" id="accountMenu">
+          <div class="account-user">
+            <div class="account-name" id="accountName">Guest</div>
+            <div class="account-meta" id="accountMeta">Not signed in</div>
+          </div>
+          <button class="account-menu-btn" onclick="switchAccount()">Switch account</button>
+          <button class="account-menu-btn danger" onclick="logout()">Log out</button>
+        </div>
       </div>
-      <div class="brand-hero">
-        <div class="brand-hero-eyebrow">NYC University Dining</div>
-        <h1 class="brand-hero-title">Find great food,<br><em>near your campus.</em></h1>
-        <p class="brand-hero-sub">Personalized restaurant discovery, today's deals, and a social check-in experience — built for NYC students.</p>
+    </div>
+  </nav>
+
+  <main class="dash-main">
+    <div class="map-stage">
+      <div id="map"></div>
+      <button class="detail-back" onclick="closeDetail()">← Back</button>
+      <div class="map-controls">
+        <div class="map-ctrl-btn" onclick="mapInstance && mapInstance.zoomIn()">+</div>
+        <div class="map-ctrl-btn" onclick="mapInstance && mapInstance.zoomOut()">−</div>
       </div>
-      <div class="brand-schools">
-        <div class="school-chip" id="chipColumbia">Columbia</div>
-        <div class="school-chip" id="chipNYU">NYU</div>
-        <div class="school-chip" id="chipOther">+ more</div>
+      <div class="deal-strip" id="dealStrip"></div>
+    </div>
+
+    <!-- Improved back button (Detail mode) -->
+    <button class="detail-back-btn" onclick="goBack()">
+      <span class="back-icon">←</span>
+      <span class="back-text">Back</span>
+    </button>
+
+    <!-- Detail prev/next nav -->
+    <button class="detail-nav-btn prev" id="prevRestBtn" onclick="prevRestaurant()" aria-label="Previous restaurant"><span>‹</span></button>
+    <button class="detail-nav-btn next" id="nextRestBtn" onclick="nextRestaurant()" aria-label="Next restaurant"><span>›</span></button>
+
+    <!-- Map mode floating search card -->
+    <div class="map-search-card" id="mapSearchCard">
+      <div class="panel-search">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M15 15l-3-3"/></svg>
+        <input type="text" id="mapSearchInput" placeholder="Search on map...">
+      </div>
+      <div class="map-filter-grid">
+        <div class="map-filter-group">
+          <div class="filter-label">Primary Filter</div>
+          <div class="mood-row">
+            <button class="mood-chip" data-mood="quick" onclick="setMood(this,'quick')">⚡ Quick</button>
+            <button class="mood-chip" data-mood="date" onclick="setMood(this,'date')">🕯 Date</button>
+            <button class="mood-chip" data-mood="latenight" onclick="setMood(this,'latenight')">🌙 Late Night</button>
+            <button class="mood-chip" data-mood="healthy" onclick="setMood(this,'healthy')">🥗 Healthy</button>
+            <button class="mood-chip" data-mood="instagrammable" onclick="setMood(this,'instagrammable')">📸 Aesthetic</button>
+          </div>
+        </div>
+        <div class="map-filter-group">
+          <div class="filter-label">Price Filter</div>
+          <div class="filter-row" id="mapFilterPills">
+            <button class="filter-chip active" data-price="all" onclick="setFilter(this,'all')">All</button>
+            <button class="filter-chip" data-price="$" onclick="setFilter(this,'$')">$</button>
+            <button class="filter-chip" data-price="$$" onclick="setFilter(this,'$$')">$$</button>
+            <button class="filter-chip" data-price="$$$+" onclick="setFilter(this,'$$$+')">$$$+</button>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Right form -->
+    <div class="home-container" id="homeContainer">
+
+      <!-- Hero / Search section -->
+      <section class="home-section home-hero">
+        <div class="panel-eyebrow" id="homeEyebrow">NYC University Dining</div>
+        <h1 class="panel-title" id="homeTitle">Find food near campus.</h1>
+        <p class="panel-sub" id="homeSub">Browse student-friendly restaurants without signing in.</p>
+        <div class="panel-search">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M15 15l-3-3"/></svg>
+          <input type="text" id="searchInput" placeholder="Search restaurants...">
+        </div>
+      </section>
+
+      <!-- Filters row: filter card + view toggle card -->
+      <div class="home-filters-row">
+        <section class="home-section toggle-card">
+          <div class="ranking-group">
+            <div class="filter-label">Ranking</div>
+            <div class="sidebar-toggle">
+              <button class="stoggle-btn active" id="rankAll" data-rank="all" onclick="setRankingMode('all', this)">All</button>
+              <button class="stoggle-btn" id="rankHeat" data-rank="heat" onclick="setRankingMode('heat', this)">Heat</button>
+              <button class="stoggle-btn" id="rankMonth" data-rank="month" onclick="setRankingMode('month', this)">Month</button>
+              <button class="stoggle-btn" id="rankWeek" data-rank="week" onclick="setRankingMode('week', this)">Week</button>
+              <button class="stoggle-btn" id="rankCheckin" data-rank="checkin" onclick="setRankingMode('checkin', this)">Check-in</button>
+            </div>
+          </div>
+          <div class="filter-groups">
+            <div class="filter-group">
+              <div class="filter-label">Primary Filter</div>
+              <div class="mood-row">
+                <button class="mood-chip" data-mood="quick" onclick="setMood(this,'quick')">⚡ Quick</button>
+                <button class="mood-chip" data-mood="date" onclick="setMood(this,'date')">🕯 Date</button>
+                <button class="mood-chip" data-mood="latenight" onclick="setMood(this,'latenight')">🌙 Late Night</button>
+                <button class="mood-chip" data-mood="healthy" onclick="setMood(this,'healthy')">🥗 Healthy</button>
+                <button class="mood-chip" data-mood="instagrammable" onclick="setMood(this,'instagrammable')">📸 Aesthetic</button>
+              </div>
+            </div>
+            <div class="filter-group">
+              <div class="filter-label">Price Filter</div>
+              <div class="filter-row" id="filterRow">
+                <button class="filter-chip active" data-price="all" onclick="setFilter(this,'all')">All</button>
+                <button class="filter-chip" data-price="$" onclick="setFilter(this,'$')">$</button>
+                <button class="filter-chip" data-price="$$" onclick="setFilter(this,'$$')">$$</button>
+                <button class="filter-chip" data-price="$$$+" onclick="setFilter(this,'$$$+')">$$$+</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Restaurant picks section -->
+      <section class="home-section rest-section">
+        <h2 class="section-title" id="rankingTitle">All Restaurants</h2>
+        <div class="rest-list" id="restList"></div>
+      </section>
+
+    </div>
+
+    <section class="floating-panel favourites-panel" id="favouritesPanel">
+      <div class="panel-head">
+        <div class="panel-eyebrow">Saved around campus</div>
+        <h2 class="panel-title">My Favourites</h2>
+        <p class="panel-sub" id="favouritesSub">Sign in to save restaurants and organize them for later.</p>
+      </div>
+      <div class="fav-tabs" id="favTabs"></div>
+      <div class="favourites-list" id="favouritesList"></div>
+    </section>
+
+    <section class="detail-sheet" id="detailSheet">
+      <div class="sheet-handle"></div>
+      <div class="detail-hero" id="detailHero">
+        <button class="fav-hero-btn" id="favHeroBtn" onclick="toggleFavourite(activeId)">♡</button>
+      </div>
+      <div class="detail-content">
+        <div class="detail-kicker" id="dCategory"></div>
+        <div class="detail-title-row">
+          <h2 class="detail-name" id="dName"></h2>
+        </div>
+        <div class="quick-overview">
+          <div class="overview-item"><div class="overview-label">Rating</div><div class="overview-value"><span class="star">★</span> <span id="dRating"></span></div></div>
+          <div class="overview-item"><div class="overview-label">Price</div><div class="overview-value" id="dPrice"></div></div>
+          <div class="overview-item"><div class="overview-label">Distance</div><div class="overview-value" id="dDist"></div></div>
+        </div>
+        <div class="detail-section detail-goodfor"><div class="detail-section-label">Good for</div><div class="detail-tags" id="dGoodFor"></div></div>
+        <div class="detail-section detail-neighborhood"><div class="detail-section-label">Neighborhood</div><div class="detail-desc" id="dNeighborhood"></div></div>
+        <div class="detail-section detail-about"><div class="detail-section-label">About</div><div class="detail-desc" id="dDesc"></div></div>
+        <div class="detail-section detail-tags-block"><div class="detail-section-label">Tags</div><div class="detail-tags" id="dTags"></div></div>
+        <div class="detail-section detail-address"><div class="detail-section-label">Address</div><div class="address-line" id="dAddress"></div></div>
+        <div class="detail-section detail-review-form">
+  <div class="detail-section-label">Write a review</div>
+  <div class="rating-picker" id="ratingPicker">
+    <span class="rating-star" data-value="1" onclick="setReviewRating(1)" onmouseover="hoverReviewRating(1)" onmouseout="hoverReviewRating(0)">★</span>
+    <span class="rating-star" data-value="2" onclick="setReviewRating(2)" onmouseover="hoverReviewRating(2)" onmouseout="hoverReviewRating(0)">★</span>
+    <span class="rating-star" data-value="3" onclick="setReviewRating(3)" onmouseover="hoverReviewRating(3)" onmouseout="hoverReviewRating(0)">★</span>
+    <span class="rating-star" data-value="4" onclick="setReviewRating(4)" onmouseover="hoverReviewRating(4)" onmouseout="hoverReviewRating(0)">★</span>
+    <span class="rating-star" data-value="5" onclick="setReviewRating(5)" onmouseover="hoverReviewRating(5)" onmouseout="hoverReviewRating(0)">★</span>
+    <span class="rating-label" id="ratingLabel">Tap to rate</span>
+  </div>
+  <div class="review-form">
+    <textarea class="review-input" id="reviewInput" placeholder="Share a quick note..."></textarea>
+    <button class="review-submit" onclick="submitReview()">Submit</button>
+  </div>
+</div>
+        <div class="detail-section detail-reviews"><div class="detail-section-label">Reviews</div><div class="review-list" id="reviewList"></div></div>
+        <div class="detail-actions">
+          <button class="checkin-btn" id="checkinBtn" onclick="doCheckin()">📍 Check In</button>
+          <button class="navigate-btn" onclick="openNavigation()">🧭 Get Directions</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="screenLogin">
+  <button class="login-close-btn" onclick="closeLogin()" aria-label="Close login">×</button>
+  <div class="login-page">
+    <div class="brand-panel" id="brandPanel">
+      <div class="brand-logo"><div class="brand-logo-icon">🍜</div><div class="brand-logo-name">BITE NYC</div></div>
+      <div class="brand-hero">
+        <div class="brand-hero-eyebrow">NYC University Dining</div>
+        <h1 class="brand-hero-title">Find great food,<br><em>near your campus.</em></h1>
+        <p class="brand-hero-sub">Personalized restaurant discovery, today's deals, and a social check-in experience built for NYC students.</p>
+      </div>
+      <div class="brand-schools"><div class="school-chip" id="chipColumbia">Columbia</div><div class="school-chip" id="chipNYU">NYU</div><div class="school-chip" id="chipOther">+ more</div></div>
+    </div>
     <div class="form-panel">
-      <div class="form-top-bar">New here? <a href="#">Learn more</a></div>
+      <div class="form-top-bar">Just browsing? <a href="#" onclick="hideLogin();return false;">Back to discovery</a></div>
       <div class="form-inner">
         <div class="form-eyebrow" id="formEyebrow">Student Access</div>
         <h2 class="form-title">Sign in</h2>
-        <p class="form-sub">Use your university email to unlock your personalized campus dining experience.</p>
-
+        <p class="form-sub">Use your university email to unlock your campus theme, favourites, and saved lists.</p>
         <div class="input-group">
           <label class="input-label" for="emailInput">University email</label>
           <div class="input-wrap">
             <input type="email" id="emailInput" class="email-input" placeholder="you@university.edu" autocomplete="email" spellcheck="false">
-            <div class="l-school-badge" id="lSchoolBadge">
-              <div class="l-school-badge-dot" id="lBadgeDot"></div>
-              <span id="lBadgeText">Columbia</span>
-            </div>
+            <div class="l-school-badge" id="lSchoolBadge"><div class="l-school-badge-dot" id="lBadgeDot"></div><span id="lBadgeText">Columbia</span></div>
           </div>
         </div>
-
         <div class="demo-row">
           <div class="demo-label">Try a demo account</div>
           <button class="demo-btn" onclick="fillDemo('columbia')"><div class="demo-btn-dot" style="background:#1a6bb5"></div>Columbia</button>
           <button class="demo-btn" onclick="fillDemo('nyu')"><div class="demo-btn-dot" style="background:#8B1DB5"></div>NYU</button>
         </div>
-
-        <button class="submit-btn" id="submitBtn" disabled onclick="handleSubmit()">
-          <span>Continue</span><span class="submit-btn-arrow">→</span>
-        </button>
-
+        <button class="submit-btn" id="submitBtn" disabled onclick="handleSubmit()"><span>Continue</span><span>→</span></button>
         <div class="or-row"><div class="or-line"></div><span>or</span><div class="or-line"></div></div>
         <div class="sso-row">
-          <button class="sso-btn">
-            <svg class="sso-icon" viewBox="0 0 24 24" fill="none">
-              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-            </svg>
-            Google
-          </button>
-          <button class="sso-btn">
-            <svg class="sso-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
-            School SSO
-          </button>
+          <button class="sso-btn"><svg class="sso-icon" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>Google</button>
+          <button class="sso-btn"><svg class="sso-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>School SSO</button>
         </div>
-
         <div class="terms">By continuing, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>. Your .edu email is used only for school identification.</div>
       </div>
     </div>
-
   </div>
-</div><!-- end #screenLogin -->
-
-
-<!-- ════════════════════════════════════════
-  SCREEN 2: DASHBOARD
-════════════════════════════════════════ -->
-<div id="screenDashboard">
-
-  <!-- NAV -->
-  <nav class="nav">
-    <div class="nav-logo" onclick="goToLogin()">
-      <div class="nav-logo-icon" id="navLogoIcon">🍜</div>
-      <div class="nav-logo-name">BITE NYC</div>
-    </div>
-    <div class="nav-search">
-      <svg class="nav-search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M15 15l-3-3"/></svg>
-      <input type="text" id="searchInput" placeholder="Search restaurants…">
-    </div>
-    <div class="nav-tabs">
-      <button class="nav-tab active" id="tabDiscover" onclick="setNavTab('discover')">
-        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 2.5"/></svg>Discover
-      </button>
-      <button class="nav-tab" id="tabDeals" onclick="setNavTab('deals')">
-        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9.5 3L3 9.5 10.5 17l6.5-6.5L10.5 3h-1z"/><circle cx="13" cy="7" r="1.2" fill="currentColor"/></svg>Deals
-      </button>
-      <button class="nav-tab" id="tabFriends" onclick="setNavTab('friends')">
-        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="7" cy="7" r="3"/><path d="M1 17c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="14.5" cy="7" r="2.5"/><path d="M17 17c0-2.5-1.8-4.5-4-5"/></svg>Social
-      </button>
-    </div>
-    <div class="nav-right">
-      <div class="nav-school-badge" id="navSchoolBadge">Columbia</div>
-      <div class="nav-avatar" id="navAvatar">E</div>
-    </div>
-  </nav>
-
-  <!-- MAIN -->
-  <div class="dash-main">
-
-    <!-- SIDEBAR -->
-    <div class="sidebar">
-      <div class="sidebar-head">
-        <div class="sidebar-title" id="sidebarTitle">Near Columbia</div>
-        <div class="sidebar-sub"   id="sidebarSub">6 spots · sorted by rating</div>
-      </div>
-
-      <div class="mood-row">
-        <button class="mood-chip" onclick="setMood(this,'quick')">⚡ Quick</button>
-        <button class="mood-chip" onclick="setMood(this,'date')">🕯 Date night</button>
-        <button class="mood-chip" onclick="setMood(this,'latenight')">🌙 Late night</button>
-        <button class="mood-chip" onclick="setMood(this,'healthy')">🥗 Light</button>
-        <button class="mood-chip" onclick="setMood(this,'instagrammable')">📸 Aesthetic</button>
-      </div>
-
-      <div class="sidebar-toggle">
-        <button class="stoggle-btn active" id="sbList" onclick="setSideView('list')">
-          <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 6h12M4 10h12M4 14h12"/></svg>List
-        </button>
-        <button class="stoggle-btn" id="sbSwipe" onclick="setSideView('swipe')">
-          <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 10h10M13 7l3 3-3 3"/></svg>Swipe
-        </button>
-      </div>
-
-      <div class="filter-row" id="filterRow">
-        <button class="filter-chip active" onclick="setFilter(this,'all')">All</button>
-        <button class="filter-chip" onclick="setFilter(this,'cheap')">$ Cheap</button>
-        <button class="filter-chip" onclick="setFilter(this,'latenight')">🌙 Late</button>
-        <button class="filter-chip" onclick="setFilter(this,'study')">📖 Study</button>
-        <button class="filter-chip" onclick="setFilter(this,'toprated')">⭐ Top</button>
-      </div>
-
-      <div class="rest-list" id="restList"></div>
-
-      <div class="swipe-panel" id="swipePanel">
-        <div class="swipe-progress" id="swipePips"></div>
-        <div class="swipe-stack" id="swipeStack">
-          <div class="swipe-back-card" id="swipeBack"></div>
-          <div class="swipe-front-card" id="swipeFront">
-            <div class="swipe-overlay-label save-lbl" id="swipeSaveLbl">SAVE ✓</div>
-            <div class="swipe-overlay-label skip-lbl" id="swipeSkipLbl">SKIP ✕</div>
-            <div class="sfc-category" id="sfcCat"></div>
-            <div class="sfc-name"     id="sfcName"></div>
-            <div class="sfc-tag"      id="sfcTag"></div>
-            <div class="sfc-badges"   id="sfcBadges"></div>
-            <div class="sfc-hint">drag →</div>
-          </div>
-        </div>
-        <div class="swipe-done" id="swipeDone" style="display:none">
-          <div class="swipe-done-emoji">🎉</div>
-          <div class="swipe-done-title">You've seen them all!</div>
-          <div class="swipe-done-sub" id="swipeDoneSub"></div>
-          <button class="swipe-restart-btn" onclick="swipeRestart()">Start over</button>
-        </div>
-        <div class="swipe-actions" id="swipeActions">
-          <button class="swipe-action-btn skip-btn" onclick="swipeAdvance('skip')">✕</button>
-          <div class="swipe-counter" id="swipeCounter">1 / 6</div>
-          <button class="swipe-action-btn save-btn" onclick="swipeAdvance('save')">✓</button>
-        </div>
-        <div class="swipe-saved" id="swipeSaved" style="display:none">
-          <div class="swipe-saved-header">Saved spots <span class="swipe-saved-count" id="swipeSavedCount">0</span></div>
-          <div id="swipeSavedItems"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- MAP -->
-    <div class="map-wrap">
-      <div id="map"></div>
-      <div class="map-controls">
-        <div class="map-ctrl-btn" onclick="mapInstance.zoomIn()">+</div>
-        <div class="map-ctrl-btn" onclick="mapInstance.zoomOut()">−</div>
-      </div>
-      <div class="deal-strip" id="dealStrip"></div>
-
-      <div class="detail-panel" id="detailPanel">
-        <div class="detail-close" onclick="closeDetail()">✕</div>
-        <div class="detail-head">
-          <div class="detail-category" id="dCategory"></div>
-          <div class="detail-name"     id="dName"></div>
-          <div class="detail-meta">
-            <span class="star">★</span><span id="dRating"></span>
-            <span style="color:var(--border)">·</span><span id="dPrice"></span>
-            <span style="color:var(--border)">·</span><span id="dDist"></span>
-          </div>
-        </div>
-        <div class="detail-body">
-          <div class="detail-section"><div class="detail-section-label">About</div><div class="detail-desc" id="dDesc"></div></div>
-          <div class="detail-section"><div class="detail-section-label">Tags</div><div class="detail-tags" id="dTags"></div></div>
-          <div class="detail-section"><div class="detail-section-label">Hours today</div><div id="dHours"></div></div>
-        </div>
-        <div class="detail-footer">
-          <button class="detail-btn" onclick="saveRestaurant()">♡ Save</button>
-          <button class="detail-btn primary" id="checkinBtn" onclick="doCheckin()">📍 Check In</button>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</div><!-- end #screenDashboard -->
-
-<!-- Toast (shared) -->
+</div>
 <div class="toast" id="toast"></div>
 
-<script>
-/* ══════════════════════════════════════════
-   SCHOOL CONFIG
-══════════════════════════════════════════ */
-const SCHOOL_CFG = {
-  columbia: { name:'Columbia University', short:'Columbia', primary:'#1A6BB5', tint:'rgba(26,107,181,0.08)', mid:'rgba(26,107,181,0.18)', emoji:'🦁', greeting:'Welcome, Lion.', center:[40.8075,-73.9626], zoom:15, avatar:'E' },
-  nyu:      { name:'New York University',  short:'NYU',      primary:'#8B1DB5', tint:'rgba(139,29,181,0.08)',  mid:'rgba(139,29,181,0.18)',  emoji:'🔮', greeting:'Welcome, Violet.', center:[40.7295,-73.9965], zoom:15, avatar:'A' },
-};
-const MOOD_TAG = { quick:'⚡ Quick', date:'🕯 Date', latenight:'🌙 Late Night', healthy:'🥗 Healthy', instagrammable:'📸 Aesthetic' };
+<!-- Location request modal -->
+<div class="location-modal" id="locationModal">
+  <div class="location-modal-content">
+    <div class="location-icon">📍</div>
+    <h3>Enable Location</h3>
+    <p>Allow location access to see how far each restaurant is from you and get accurate directions.</p>
+    <div class="location-modal-actions">
+      <button class="btn-primary" onclick="getUserLocation()">Enable Location</button>
+      <button class="btn-secondary" onclick="closeLocationModal()">Maybe Later</button>
+    </div>
+  </div>
+</div>
 
-/* ── Restaurant data ── */
+<script>
+const SCHOOL_CFG = {
+  columbia:{name:'Columbia University', short:'Columbia', primary:'#1A6BB5', tint:'rgba(26,107,181,0.08)', mid:'rgba(26,107,181,0.18)', emoji:'🦁', greeting:'Welcome, Lion.', center:[40.8075,-73.9626], zoom:15, avatar:'E'},
+  nyu:{name:'New York University', short:'NYU', primary:'#8B1DB5', tint:'rgba(139,29,181,0.08)', mid:'rgba(139,29,181,0.18)', emoji:'🔮', greeting:'Welcome, Violet.', center:[40.7295,-73.9965], zoom:15, avatar:'A'}
+};
+const SCHOOL_FOCUS = {
+  columbia:{lat:40.8075, lng:-73.9626, zoom:15},
+  nyu:{lat:40.7295, lng:-73.9965, zoom:15}
+};
+const GUEST_THEME = { primary:'#555555', tint:'rgba(85,85,85,0.08)', mid:'rgba(85,85,85,0.18)' };
+const MOOD_TAG = { quick:'⚡ Quick', date:'🕯 Date', latenight:'🌙 Late Night', healthy:'🥗 Healthy', instagrammable:'📸 Aesthetic' };
+const GOOD_FOR = { cheap:'Budget-friendly', latenight:'Late Night', study:'Study Spots', healthy:'Healthy', toprated:'Top Rated' };
 const ALL_RESTAURANTS = {
   columbia:[
-    {id:1,name:'Koronet Pizza',category:'Pizza',price:'$',rating:4.3,dist:'0.1 mi',lat:40.8044,lng:-73.9645,tags:['cheap','latenight'],moods:['quick','latenight'],desc:'Famous for enormous NYC slices. Open until 4AM — the ultimate post-library stop.',hours:[['Mon–Thu','11am – 4am'],['Fri–Sat','11am – 5am'],['Sun','12pm – 3am']]},
-    {id:2,name:'Junzi Kitchen',category:'Chinese',price:'$',rating:4.5,dist:'0.2 mi',lat:40.8077,lng:-73.9634,tags:['cheap','study','healthy'],moods:['quick','healthy'],desc:'Fast, fresh Chinese-inspired bowls. Customizable and endlessly satisfying.',hours:[['Mon–Fri','11am – 9pm'],['Sat–Sun','12pm – 8pm']]},
-    {id:3,name:'Thai Market',category:'Thai',price:'$',rating:4.6,dist:'0.4 mi',lat:40.7991,lng:-73.9668,tags:['cheap','toprated'],moods:['quick','instagrammable'],desc:'A tiny kitchen beloved by locals. Massive flavor per dollar.',hours:[['Mon–Sat','11am – 10pm'],['Sun','Closed']]},
-    {id:4,name:'Community Food & Juice',category:'Café',price:'$$',rating:4.4,dist:'0.3 mi',lat:40.8019,lng:-73.9662,tags:['study','healthy','toprated'],moods:['healthy','instagrammable'],desc:'Farm-to-table café with great wifi and a calm vibe. Grad student go-to.',hours:[['Mon–Fri','8am – 9pm'],['Sat–Sun','9am – 6pm']]},
-    {id:5,name:"Tom's Restaurant",category:'Diner',price:'$$',rating:4.2,dist:'0.2 mi',lat:40.8055,lng:-73.9648,tags:['latenight'],moods:['latenight','instagrammable'],desc:'The Seinfeld diner. Classic American comfort food with serious pop-culture cred.',hours:[['Mon–Fri','6am – 2am'],['Sat–Sun','6am – 3am']]},
-    {id:6,name:'Pisticci',category:'Italian',price:'$$',rating:4.7,dist:'0.5 mi',lat:40.8012,lng:-73.9683,tags:['toprated'],moods:['date'],desc:'Cozy Italian trattoria on a tree-lined block. Date night favorite.',hours:[['Tue–Thu','5pm – 10pm'],['Fri–Sat','5pm – 11pm'],['Sun','4pm – 9pm']]},
+    {id:1,name:'Koronet Pizza',category:'Pizza',price:'$',rating:4.3,dist:'0.1 mi',lat:40.8044,lng:-73.9645,tags:['cheap','latenight'],moods:['quick','latenight'],neighborhood:'Morningside Heights',address:'2848 Broadway, New York, NY 10025',hero:'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1200&q=80',desc:'Famous for enormous NYC slices. Open until 4AM, the ultimate post-library stop.',reviews:['The slice is bigger than my laptop. Exactly what I need after Butler.','Fast, cheap, and always there late.']},
+    {id:2,name:'Junzi Kitchen',category:'Chinese',price:'$',rating:4.5,dist:'0.2 mi',lat:40.8077,lng:-73.9634,tags:['cheap','study','healthy'],moods:['quick','healthy'],neighborhood:'Morningside Heights',address:'2896 Broadway, New York, NY 10025',hero:'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=1200&q=80',desc:'Fast, fresh Chinese-inspired bowls. Customizable and endlessly satisfying.',reviews:['Reliable lunch between classes.','The noodle bowls travel well for study sessions.']},
+    {id:3,name:'Thai Market',category:'Thai',price:'$',rating:4.6,dist:'0.4 mi',lat:40.7991,lng:-73.9668,tags:['cheap','toprated'],moods:['quick','instagrammable'],neighborhood:'Upper West Side',address:'960 Amsterdam Ave, New York, NY 10025',hero:'https://images.unsplash.com/photo-1559314809-0d155014e29e?auto=format&fit=crop&w=1200&q=80',desc:'A tiny kitchen beloved by locals. Massive flavor per dollar.',reviews:['Worth the walk south. The lunch special is a cheat code.']},
+    {id:4,name:'Community Food & Juice',category:'Cafe',price:'$$',rating:4.4,dist:'0.3 mi',lat:40.8019,lng:-73.9662,tags:['study','healthy','toprated'],moods:['healthy','instagrammable'],neighborhood:'Morningside Heights',address:'2893 Broadway, New York, NY 10025',hero:'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1200&q=80',desc:'Farm-to-table cafe with great wifi and a calm vibe. Grad student go-to.',reviews:['Good brunch, good light, good place to reset.']},
+    {id:5,name:"Tom's Restaurant",category:'Diner',price:'$$',rating:4.2,dist:'0.2 mi',lat:40.8055,lng:-73.9648,tags:['latenight'],moods:['latenight','instagrammable'],neighborhood:'Morningside Heights',address:'2880 Broadway, New York, NY 10025',hero:'https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=1200&q=80',desc:'The Seinfeld diner. Classic American comfort food with serious pop-culture cred.',reviews:['Touristy, but still a dependable diner.']},
+    {id:6,name:'Pisticci',category:'Italian',price:'$$',rating:4.7,dist:'0.5 mi',lat:40.8012,lng:-73.9683,tags:['toprated'],moods:['date'],neighborhood:'Manhattan Valley',address:'125 La Salle St, New York, NY 10027',hero:'https://images.unsplash.com/photo-1551218808-94e220e084d2?auto=format&fit=crop&w=1200&q=80',desc:'Cozy Italian trattoria on a tree-lined block. Date night favorite.',reviews:['Quiet enough to talk, polished enough to feel special.']}
   ],
   nyu:[
-    {id:7,name:"Joe's Pizza",category:'Pizza',price:'$',rating:4.7,dist:'0.1 mi',lat:40.7307,lng:-74.0005,tags:['cheap','toprated','latenight'],moods:['quick','latenight'],desc:'The definitive NYC slice. Zero frills, maximum flavor. A rite of passage.',hours:[['Mon–Thu','10am – 4am'],['Fri–Sat','10am – 5am'],['Sun','11am – 2am']]},
-    {id:8,name:"Mamoun's Falafel",category:'Middle Eastern',price:'$',rating:4.5,dist:'0.2 mi',lat:40.7308,lng:-74.0000,tags:['cheap','latenight','healthy'],moods:['quick','healthy','latenight'],desc:'Serving the neighborhood since 1971. Best late-night falafel in the city.',hours:[['Daily','10am – 4am']]},
-    {id:9,name:'Prince Street Pizza',category:'Pizza',price:'$',rating:4.6,dist:'0.3 mi',lat:40.7253,lng:-73.9966,tags:['cheap','toprated'],moods:['quick','instagrammable'],desc:'Pepperoni cups + crispy bottom = the perfect square slice.',hours:[['Mon–Sat','11am – 11pm'],['Sun','12pm – 10pm']]},
-    {id:10,name:"Xi'an Famous Foods",category:'Chinese',price:'$',rating:4.5,dist:'0.4 mi',lat:40.7258,lng:-73.9990,tags:['cheap','study'],moods:['quick'],desc:'Hand-pulled noodles from Northwest China. Spicy, bold, completely addictive.',hours:[['Mon–Fri','11am – 9:30pm'],['Sat–Sun','11am – 10pm']]},
-    {id:11,name:"Sticky's Finger Joint",category:'American',price:'$$',rating:4.3,dist:'0.2 mi',lat:40.7289,lng:-73.9984,tags:['latenight'],moods:['latenight'],desc:'Creative takes on chicken fingers. Sauces worth the trip alone.',hours:[['Mon–Thu','11am – 12am'],['Fri–Sat','11am – 2am'],['Sun','12pm – 11pm']]},
-    {id:12,name:'Carbone',category:'Italian',price:'$$$$',rating:4.8,dist:'0.6 mi',lat:40.7297,lng:-74.0010,tags:['toprated'],moods:['date','instagrammable'],desc:'Old-school red-sauce glamour. The vibe is as good as the pasta. Reserve ahead.',hours:[['Tue–Sun','5:30pm – 11pm']]},
-  ],
+    {id:7,name:"Joe's Pizza",category:'Pizza',price:'$',rating:4.7,dist:'0.1 mi',lat:40.7307,lng:-74.0005,tags:['cheap','toprated','latenight'],moods:['quick','latenight'],neighborhood:'Greenwich Village',address:'7 Carmine St, New York, NY 10014',hero:'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=1200&q=80',desc:'The definitive NYC slice. Zero frills, maximum flavor. A rite of passage.',reviews:['The line moves fast and the slice is always right.']},
+    {id:8,name:"Mamoun's Falafel",category:'Middle Eastern',price:'$',rating:4.5,dist:'0.2 mi',lat:40.7308,lng:-74.0000,tags:['cheap','latenight','healthy'],moods:['quick','healthy','latenight'],neighborhood:'Greenwich Village',address:'119 MacDougal St, New York, NY 10012',hero:'https://images.unsplash.com/photo-1593001872095-7d5b3868fb1d?auto=format&fit=crop&w=1200&q=80',desc:'Serving the neighborhood since 1971. Best late-night falafel in the city.',reviews:['Perfect after a long night near Washington Square.']},
+    {id:9,name:'Prince Street Pizza',category:'Pizza',price:'$',rating:4.6,dist:'0.3 mi',lat:40.7253,lng:-73.9966,tags:['cheap','toprated'],moods:['quick','instagrammable'],neighborhood:'Nolita',address:'27 Prince St A, New York, NY 10012',hero:'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=1200&q=80',desc:'Pepperoni cups and crispy bottom make the perfect square slice.',reviews:['Spicy spring is worth the wait.']},
+    {id:10,name:"Xi'an Famous Foods",category:'Chinese',price:'$',rating:4.5,dist:'0.4 mi',lat:40.7258,lng:-73.9990,tags:['cheap','study'],moods:['quick'],neighborhood:'Greenwich Village',address:'45 Bayard St, New York, NY 10013',hero:'https://images.unsplash.com/photo-1552611052-33e04de081de?auto=format&fit=crop&w=1200&q=80',desc:'Hand-pulled noodles from Northwest China. Spicy, bold, completely addictive.',reviews:['Noodles with real heat. Great between studio blocks.']},
+    {id:11,name:"Sticky's Finger Joint",category:'American',price:'$$',rating:4.3,dist:'0.2 mi',lat:40.7289,lng:-73.9984,tags:['latenight'],moods:['latenight'],neighborhood:'Greenwich Village',address:'31 W 8th St, New York, NY 10011',hero:'https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&w=1200&q=80',desc:'Creative takes on chicken fingers. Sauces worth the trip alone.',reviews:['Comfort food with zero pretense.']},
+    {id:12,name:'Carbone',category:'Italian',price:'$$$$',rating:4.8,dist:'0.6 mi',lat:40.7297,lng:-74.0010,tags:['toprated'],moods:['date','instagrammable'],neighborhood:'Greenwich Village',address:'181 Thompson St, New York, NY 10012',hero:'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1200&q=80',desc:'Old-school red-sauce glamour. The vibe is as good as the pasta. Reserve ahead.',reviews:['A splurge, but the room feels cinematic.']}
+  ]
 };
 const DEALS = {
-  columbia:[{type:'deal',icon:'🍕',label:'Deal',title:'15% off lunch combos',time:'11am – 2pm · Junzi Kitchen'},{type:'free',icon:'🎉',label:'Free Food',title:'Free pizza at Lerner Hall',time:'6pm – 7:30pm · Student Council'},{type:'event',icon:'☕',label:'Event',title:'Study + coffee meetup',time:'3pm – 5pm · Butler Lawn'},{type:'deal',icon:'🥗',label:'Deal',title:'BOGO salads today',time:'All day · Community Food & Juice'}],
-  nyu:[{type:'free',icon:'🎉',label:'Free Food',title:'Free bagels at Kimmel',time:'8am – 10am · GSA'},{type:'deal',icon:'🍕',label:'Deal',title:'$1 off any slice',time:"All day · Joe's Pizza"},{type:'event',icon:'🎵',label:'Event',title:'Jazz & dinner on the square',time:'7pm – 9pm · Washington Sq'},{type:'deal',icon:'🌯',label:'Deal',title:'Student discount with ID',time:"All day · Mamoun's Falafel"}],
+  columbia:[{type:'deal',icon:'🍕',label:'Deal',title:'15% off lunch combos',time:'11am - 2pm · Junzi Kitchen'},{type:'free',icon:'🎉',label:'Free Food',title:'Free pizza at Lerner Hall',time:'6pm - 7:30pm · Student Council'},{type:'event',icon:'☕',label:'Event',title:'Study + coffee meetup',time:'3pm - 5pm · Butler Lawn'},{type:'deal',icon:'🥗',label:'Deal',title:'BOGO salads today',time:'All day · Community Food & Juice'}],
+  nyu:[{type:'free',icon:'🎉',label:'Free Food',title:'Free bagels at Kimmel',time:'8am - 10am · GSA'},{type:'deal',icon:'🍕',label:'Deal',title:'$1 off any slice',time:"All day · Joe's Pizza"},{type:'event',icon:'🎵',label:'Event',title:'Jazz & dinner on the square',time:'7pm - 9pm · Washington Sq'},{type:'deal',icon:'🌯',label:'Deal',title:'Student discount with ID',time:"All day · Mamoun's Falafel"}]
 };
+window.BITE_RESTAURANTS = ALL_RESTAURANTS;
 
-/* ══════════════════════════════════════════
-   LOGIN STATE
-══════════════════════════════════════════ */
+const BiteServices = (() => {
+  const readJSON = (key, fallback = null) => {
+    try { return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback; }
+    catch { return fallback; }
+  };
+  const writeJSON = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+  const defaultFavs = () => ({ favourites:[], lists:[{id:'all', name:'All'}, {id:'date', name:'Date Night'}, {id:'quick', name:'Quick Bites'}, {id:'study', name:'Study Spots'}] });
+  const allRestaurants = () => Object.values(ALL_RESTAURANTS).flat();
+  return {
+    auth:{
+      // getMe: read user from localStorage (set by login). Used on page boot to restore session.
+      async getMe() {
+        return readJSON('biteNYC.auth', { isAuthed:false, user:null, school:'columbia' });
+      },
+      // login: try /api/users/login first; if 404, auto-register; persist to localStorage.
+      async login(payload = {}) {
+        const email = payload.email || '';
+        const schoolKey = payload.school || detectSchool(email) || 'columbia';
+        const cfg = SCHOOL_CFG[schoolKey];
+        try {
+          let res = await fetch('/api/users/login', {
+            method:'POST',
+            headers:{ 'Content-Type':'application/json' },
+            body:JSON.stringify({ email })
+          });
+          if (res.status === 404) {
+            // Auto-register new user
+            const derivedName = email ? email.split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Student';
+            res = await fetch('/api/users/register', {
+              method:'POST',
+              headers:{ 'Content-Type':'application/json' },
+              body:JSON.stringify({ name:payload.name || derivedName, email, school:schoolKey })
+            });
+          }
+          if (!res.ok) throw new Error('Auth failed');
+          const user = await res.json();
+          const state = { isAuthed:true, user, school:user.school || schoolKey };
+          writeJSON('biteNYC.auth', state);
+          return { ...state, greeting:cfg.greeting, emoji:cfg.emoji };
+        } catch (err) {
+          console.error('Login failed:', err);
+          // Fall back to localStorage-only mode so UI doesn't break completely
+          const fallbackUser = { id:email || `user_${schoolKey}`, name:'Guest', email, school:schoolKey };
+          const state = { isAuthed:true, user:fallbackUser, school:schoolKey };
+          writeJSON('biteNYC.auth', state);
+          return { ...state, greeting:cfg.greeting, emoji:cfg.emoji };
+        }
+      },
+      async logoutUser({ clearUserData = true } = {}) {
+        localStorage.removeItem('biteNYC.auth');
+        if (clearUserData) {
+          localStorage.removeItem('biteNYC.favourites');
+          localStorage.removeItem('biteNYC.checkedIn');
+        }
+        return { isAuthed:false, user:null, school:'columbia' };
+      },
+      async switchUser() {
+        localStorage.removeItem('biteNYC.auth');
+        return { isAuthed:false, user:null, school:'columbia' };
+      }
+    },
+    restaurants:{
+      // Cache so we don't re-fetch 1067 restaurants on every filter change
+      _cache: null,
+      _cacheTime: 0,
+
+      // Convert backend restaurant doc to the shape the frontend expects
+      _mapBackendRestaurant(doc, idx) {
+        const cuisine = doc.cuisine || 'Restaurant';
+        const price = doc.price || '$$';
+        // Synthesize tags/moods from cuisine + price (since DB doesn't have them)
+        const tags = [];
+        if (price === '$') tags.push('cheap');
+        if (doc.rating >= 4.5) tags.push('toprated');
+        if (/cafe|coffee/i.test(cuisine)) tags.push('study');
+        const moods = [];
+        if (price === '$') moods.push('quick');
+        if (price === '$$$' || price === '$$$$') moods.push('date');
+        return {
+          id: idx + 1,
+          _id: doc._id,                              // MongoDB ObjectId, needed for favourites/reviews                              // numeric id for frontend code
+          place_id: doc.place_id,                   // keep real id for backend writes
+          name: doc.name,
+          category: cuisine,
+          price,
+          rating: doc.rating || 0,
+          dist: '— mi',                              // computed later from user location
+          lat: doc.lat,
+          lng: doc.lng,
+          tags,
+          moods,
+          neighborhood: doc.school === 'columbia' ? 'Morningside Heights' : 'Greenwich Village',
+          address: doc.address || '',
+          hero: doc.photo_url || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80',
+          desc: `${cuisine} restaurant${doc.review_count ? ` · ${doc.review_count} reviews` : ''}`,
+          reviews: [],
+          school: doc.school
+        };
+      },
+
+      // Fetch + cache all restaurants from the backend, mapping to frontend shape
+      async _fetchAll() {
+        if (this._cache && (Date.now() - this._cacheTime < 60000)) return this._cache;
+        try {
+          const res = await fetch('/api/restaurants');
+          const docs = await res.json();
+          this._cache = docs.map((doc, idx) => this._mapBackendRestaurant(doc, idx));
+          this._cacheTime = Date.now();
+          // Also expose grouped-by-school for the rest of the code that uses ALL_RESTAURANTS
+          window.BITE_RESTAURANTS = {
+            columbia: this._cache.filter(r => r.school === 'columbia'),
+            nyu: this._cache.filter(r => r.school === 'nyu')
+          };
+          return this._cache;
+        } catch (err) {
+          console.error('Failed to fetch restaurants:', err);
+          return [];
+        }
+      },
+
+      _matchesPrice(r, price) {
+        if (!price || price === 'all') return true;
+        return price === '$$$+' ? r.price.length >= 3 : r.price === price;
+      },
+      _matchesQuery(r, q) {
+        const query = (q || '').toLowerCase().trim();
+        if (!query) return true;
+        return (r.name || '').toLowerCase().includes(query)
+          || (r.category || '').toLowerCase().includes(query)
+          || (r.neighborhood || '').toLowerCase().includes(query)
+          || r.tags.some(t => t.toLowerCase().includes(query));
+      },
+
+      async getRestaurants(params = {}) {
+        const all = await this._fetchAll();
+        return all.filter(r => {
+          if (params.school && r.school !== params.school) return false;
+          if (params.mood && !r.moods.includes(params.mood)) return false;
+          if (!this._matchesPrice(r, params.price)) return false;
+          return this._matchesQuery(r, params.query);
+        });
+      },
+
+      async getRestaurantById(id) {
+        const all = await this._fetchAll();
+        return all.find(r => r.id === Number(id) || r.place_id === id) || null;
+      },
+
+      async getMapRestaurants(params = {}) {
+        const all = await this._fetchAll();
+        return all.filter(r => {
+          if (params.mood && !r.moods.includes(params.mood)) return false;
+          if (!this._matchesPrice(r, params.price)) return false;
+          return this._matchesQuery(r, params.query);
+        });
+      }
+    },
+    favourites:{
+      // Scoped per user. Local cache mirrors the backend so the UI lists keep working.
+      async getFavourites() {
+        // Pull from backend on each load so other devices see the same favourites
+        const auth = readJSON('biteNYC.auth', {});
+        const local = readJSON('biteNYC.favourites', { favourites:[], lists:[
+          { id:'all', name:'All' },
+          { id:'date', name:'Date Night' },
+          { id:'quick', name:'Quick Bites' },
+          { id:'study', name:'Study Spots' }
+        ]});
+        if (!auth.isAuthed || !auth.user?.id) return local;
+
+        try {
+          const res = await fetch(`/api/favourites?user_id=${auth.user.id}`);
+          if (res.ok) {
+            const remote = await res.json();
+            // Translate backend ObjectId-based records to frontend numeric ids
+            const all = window.BITE_RESTAURANTS ? Object.values(window.BITE_RESTAURANTS).flat() : [];
+            const objectIdToFrontendId = new Map(all.filter(r => r._id).map(r => [String(r._id), r.id]));
+            const remoteFavs = remote.map(f => {
+              const frontId = objectIdToFrontendId.get(String(f.restaurant_id));
+              if (frontId == null) return null;
+              // Keep any existing list assignments from local cache
+              const existing = local.favourites.find(lf => lf.id === frontId);
+              return { id: frontId, lists: existing?.lists || ['all'] };
+            }).filter(Boolean);
+            local.favourites = remoteFavs;
+            writeJSON('biteNYC.favourites', local);
+          }
+        } catch (err) {
+          console.warn('Favourites GET failed, using local cache:', err);
+        }
+        return local;
+      },
+      async saveFavourites(state) {
+        writeJSON('biteNYC.favourites', state);
+        return state;
+      },
+      async addFavourite(restaurantId, lists = ['all']) {
+        const state = readJSON('biteNYC.favourites', { favourites:[], lists:[] });
+        const existing = state.favourites.find(f => f.id === restaurantId);
+        if (existing) {
+          existing.lists = Array.from(new Set([...(existing.lists || ['all']), ...lists]));
+        } else {
+          state.favourites.push({ id:restaurantId, lists });
+        }
+        writeJSON('biteNYC.favourites', state);
+
+        // POST to backend
+        const auth = readJSON('biteNYC.auth', {});
+        const all = window.BITE_RESTAURANTS ? Object.values(window.BITE_RESTAURANTS).flat() : [];
+        const r = all.find(x => x.id === restaurantId);
+        if (auth.isAuthed && auth.user?.id && r && r._id) {
+          try {
+            await fetch('/api/favourites', {
+              method:'POST',
+              headers:{ 'Content-Type':'application/json' },
+              body:JSON.stringify({
+                user_id: auth.user.id,
+                restaurant_id: r._id,
+                restaurant_name: r.name,
+                restaurant_photo: r.hero,
+                restaurant_cuisine: r.category,
+                restaurant_rating: r.rating,
+                restaurant_price: r.price,
+                school: r.school
+              })
+            });
+          } catch (err) {
+            console.warn('Favourite POST:', err);
+          }
+        }
+        return state;
+      },
+      async removeFavourite(restaurantId, listId = null) {
+        const state = readJSON('biteNYC.favourites', { favourites:[], lists:[] });
+        const item = state.favourites.find(f => f.id === restaurantId);
+        let removedAll = false;
+        if (!item || !listId || listId === 'all') {
+          state.favourites = state.favourites.filter(f => f.id !== restaurantId);
+          removedAll = true;
+        } else {
+          item.lists = item.lists.filter(l => l !== listId);
+          if (!item.lists.length || (item.lists.length === 1 && item.lists[0] === 'all')) {
+            state.favourites = state.favourites.filter(f => f.id !== restaurantId);
+            removedAll = true;
+          }
+        }
+        writeJSON('biteNYC.favourites', state);
+
+        // DELETE from backend if fully removed
+        if (removedAll) {
+          const auth = readJSON('biteNYC.auth', {});
+          const all = window.BITE_RESTAURANTS ? Object.values(window.BITE_RESTAURANTS).flat() : [];
+          const r = all.find(x => x.id === restaurantId);
+          if (auth.isAuthed && auth.user?.id && r && r._id) {
+            try {
+              await fetch(`/api/favourites/${auth.user.id}/${r._id}`, { method:'DELETE' });
+            } catch (err) {
+              console.warn('Favourite DELETE:', err);
+            }
+          }
+        }
+        return state;
+      }
+    },
+    checkins:{
+      // Local cache: Set of frontend numeric IDs the current user has checked into.
+      // We use this to render the UI; the backend is the source of truth for persistence.
+      _localIds: new Set(),
+
+      async getMyCheckins() {
+        // On boot, ask the backend for this user's check-ins, then translate
+        // backend place_ids into frontend numeric ids using the cached restaurant list.
+        const auth = readJSON('biteNYC.auth', {});
+        if (!auth.isAuthed || !auth.user?.id) return [];
+        try {
+          const res = await fetch(`/api/checkins/user/${auth.user.id}`);
+          if (!res.ok) return [];
+          const records = await res.json();
+          const all = window.BITE_RESTAURANTS ? Object.values(window.BITE_RESTAURANTS).flat() : [];
+          const placeToId = new Map(all.map(r => [r.place_id, r.id]));
+          const ids = records.map(c => placeToId.get(c.restaurant_place_id)).filter(x => x != null);
+          this._localIds = new Set(ids);
+          return [...this._localIds];
+        } catch (err) {
+          console.error('Failed to fetch checkins:', err);
+          return [];
+        }
+      },
+
+      async createCheckin(restaurantId) {
+        const auth = readJSON('biteNYC.auth', {});
+        if (!auth.isAuthed || !auth.user?.id) {
+          // Not logged in — local-only fallback
+          this._localIds.add(restaurantId);
+          return [...this._localIds];
+        }
+        const all = window.BITE_RESTAURANTS ? Object.values(window.BITE_RESTAURANTS).flat() : [];
+        const r = all.find(x => x.id === restaurantId);
+        if (!r) {
+          console.warn('Restaurant not found for check-in:', restaurantId);
+          return [...this._localIds];
+        }
+        // Optimistic UI update
+        this._localIds.add(restaurantId);
+        // Persist to backend
+        try {
+          await fetch('/api/checkins', {
+            method:'POST',
+            headers:{ 'Content-Type':'application/json' },
+            body:JSON.stringify({
+              user_id: auth.user.id,
+              restaurant_place_id: r.place_id,
+              restaurant_name: r.name,
+              school: r.school
+            })
+          });
+        } catch (err) {
+          console.error('Failed to save check-in:', err);
+        }
+        return [...this._localIds];
+      },
+
+      async removeCheckin(restaurantId) {
+        // Backend doesn't support deletion (intentional). Just untoggle locally.
+        this._localIds.delete(restaurantId);
+        return [...this._localIds];
+      }
+    },
+    reviews:{
+      async getReviews(restaurantId) {
+        // Translate frontend numeric id → backend ObjectId, then fetch from API.
+        // Falls back to localStorage cache if backend unavailable or restaurant not found.
+        const all = window.BITE_RESTAURANTS ? Object.values(window.BITE_RESTAURANTS).flat() : [];
+        const r = all.find(x => x.id === restaurantId);
+        if (r && r._id) {
+          try {
+            const res = await fetch(`/api/reviews/${r._id}`);
+            if (res.ok) {
+              const reviews = await res.json();
+              // Map backend shape (comment) to frontend shape (text)
+              return reviews.map(rv => ({ author: rv.author, text: rv.comment, rating: rv.rating }));
+            }
+          } catch (err) {
+            console.warn('Reviews fetch failed, falling back to local:', err);
+          }
+        }
+        return readJSON(`biteNYC.reviews.${restaurantId}`, []);
+      },
+      async createReview(restaurantId, payload) {
+        const all = window.BITE_RESTAURANTS ? Object.values(window.BITE_RESTAURANTS).flat() : [];
+        const r = all.find(x => x.id === restaurantId);
+        if (r && r._id) {
+          try {
+            await fetch('/api/reviews', {
+              method:'POST',
+              headers:{ 'Content-Type':'application/json' },
+              body:JSON.stringify({
+                restaurant_id: r._id,
+                author: payload.author || 'Guest',
+                rating: payload.rating || 5,        // user-selected from star picker
+                comment: payload.text,
+                school: r.school
+              })
+            });
+          } catch (err) {
+            console.warn('Review POST failed:', err);
+          }
+        }
+        // Also keep a local copy so the UI shows it instantly even if backend is slow
+        const reviews = readJSON(`biteNYC.reviews.${restaurantId}`, []);
+        reviews.unshift(payload);
+        writeJSON(`biteNYC.reviews.${restaurantId}`, reviews);
+        return reviews;
+      }
+    },
+    location:{
+      async getLocation() { return readJSON('biteNYC.userLocation', null); },
+      async saveLocation(location) { writeJSON('biteNYC.userLocation', location); return location; },
+      async getPrompted() { return localStorage.getItem('biteNYC.locationPrompted') === 'true'; },
+      async setPrompted() { localStorage.setItem('biteNYC.locationPrompted', 'true'); }
+    }
+  };
+})();
+
 let loginSchool = null;
+let authState = { isAuthed:false, user:null, school:'columbia' };
+let school = authState.school;
+let isAuthed = authState.isAuthed;
+let previousView = 'home';
+let currentView = 'home';
+let activeMood = null;
+let activeFilter = 'all';
+let rankingMode = 'all';
+let searchQuery = '';
+let activeId = null;
+let checkedInSet = new Set();
+let checkedIn = checkedInSet;
+let mapInstance = null;
+let markers = {};
+let currentRests = [];
+let favState = { favourites:[], lists:[{id:'all', name:'All'}, {id:'date', name:'Date Night'}, {id:'quick', name:'Quick Bites'}, {id:'study', name:'Study Spots'}] };
+let activeFavList = 'all';
+let userLocation = null;
+let userMarker = null;
+let selectedRestaurant = null;
+let currentRestIndex = 0;
+let detailReturnView = 'home';
 
-const emailInput  = document.getElementById('emailInput');
-const submitBtn   = document.getElementById('submitBtn');
+const emailInput = document.getElementById('emailInput');
+const submitBtn = document.getElementById('submitBtn');
 const formEyebrow = document.getElementById('formEyebrow');
-const brandPanel  = document.getElementById('brandPanel');
-const lBadge      = document.getElementById('lSchoolBadge');
-const lBadgeDot   = document.getElementById('lBadgeDot');
-const lBadgeText  = document.getElementById('lBadgeText');
-const chipColumbia= document.getElementById('chipColumbia');
-const chipNYU     = document.getElementById('chipNYU');
-const chipOther   = document.getElementById('chipOther');
+const brandPanel = document.getElementById('brandPanel');
+const lBadge = document.getElementById('lSchoolBadge');
+const lBadgeDot = document.getElementById('lBadgeDot');
+const lBadgeText = document.getElementById('lBadgeText');
+const chipColumbia = document.getElementById('chipColumbia');
+const chipNYU = document.getElementById('chipNYU');
+const chipOther = document.getElementById('chipOther');
 
 function detectSchool(email) {
   const v = email.toLowerCase();
   if (v.includes('@columbia.edu')) return 'columbia';
-  if (v.includes('@nyu.edu'))      return 'nyu';
+  if (v.includes('@nyu.edu')) return 'nyu';
   return null;
 }
-
+function setTheme(key) {
+  const s = isAuthed ? SCHOOL_CFG[key] : GUEST_THEME;
+  const root = document.documentElement;
+  root.style.setProperty('--p', s.primary);
+  root.style.setProperty('--p-tint', s.tint);
+  root.style.setProperty('--p-mid', s.mid);
+  document.getElementById('navLogoIcon').style.background = s.primary;
+}
+async function updateMapControls() {
+  const cfg = SCHOOL_CFG[school];
+  syncFilterUI();
+  if (mapInstance && currentView === 'map') {
+    enableMapInteractions();
+    mapInstance.invalidateSize();
+    mapInstance.flyTo(cfg.center, cfg.zoom + .2, { duration:.5 });
+    updateMarkers(await getMapFilteredRests());
+  }
+}
 function applyLoginTheme(key) {
   const s = SCHOOL_CFG[key];
   const root = document.documentElement;
   if (s) {
-    root.style.setProperty('--p',      s.primary);
+    root.style.setProperty('--p', s.primary);
     root.style.setProperty('--p-tint', s.tint);
-    root.style.setProperty('--p-mid',  s.mid);
+    root.style.setProperty('--p-mid', s.mid);
     brandPanel.style.background = s.primary;
     lBadgeText.textContent = s.short;
     lBadgeDot.style.background = s.primary;
@@ -301,385 +1450,752 @@ function applyLoginTheme(key) {
     emailInput.classList.add('valid');
     formEyebrow.textContent = s.short.toUpperCase() + ' — Student Access';
     chipColumbia.classList.toggle('active', key === 'columbia');
-    chipNYU.classList.toggle('active',      key === 'nyu');
+    chipNYU.classList.toggle('active', key === 'nyu');
     chipOther.classList.remove('active');
   } else {
-    root.style.setProperty('--p',      '#111111');
-    root.style.setProperty('--p-tint', 'rgba(17,17,17,0.06)');
-    root.style.setProperty('--p-mid',  'rgba(17,17,17,0.15)');
-    brandPanel.style.background = '#111111';
+    root.style.setProperty('--p', '#555555');
+    root.style.setProperty('--p-tint', 'rgba(85,85,85,0.08)');
+    root.style.setProperty('--p-mid', 'rgba(85,85,85,0.18)');
+    brandPanel.style.background = '#555555';
     lBadge.classList.remove('visible');
     emailInput.classList.remove('valid');
     formEyebrow.textContent = 'Student Access';
-    [chipColumbia,chipNYU,chipOther].forEach(c=>c.classList.remove('active'));
+    [chipColumbia, chipNYU, chipOther].forEach(c => c.classList.remove('active'));
   }
 }
-
+function applyAuthUI() {
+  document.body.classList.toggle('is-auth', isAuthed);
+  const cfg = SCHOOL_CFG[school];
+  const user = authState.user;
+  document.getElementById('navSchoolBadge').textContent = cfg.short;
+  document.getElementById('navAvatar').textContent = user?.name ? user.name[0].toUpperCase() : cfg.avatar;
+  document.getElementById('accountName').textContent = user?.name || 'Guest';
+  document.getElementById('accountMeta').textContent = user?.email || cfg.name;
+  document.getElementById('homeEyebrow').textContent = isAuthed ? cfg.name : 'NYC University Dining';
+  document.getElementById('homeTitle').textContent = isAuthed ? `Near ${cfg.short}` : 'Find food near campus.';
+  document.getElementById('homeSub').textContent = isAuthed ? 'Your campus theme is unlocked. Save favourites as you browse.' : 'Browse restaurants now. Sign in when you want to save favourites.';
+  document.getElementById('favouritesSub').textContent = isAuthed ? 'Organize the places you want to revisit.' : 'Sign in to save restaurants and organize them for later.';
+  setTheme(school);
+}
+function syncAuthState(nextState) {
+  authState = { isAuthed:false, user:null, school:'columbia', ...(nextState || {}) };
+  isAuthed = authState.isAuthed;
+  school = authState.school || 'columbia';
+}
+function toggleAccountMenu() {
+  if (!isAuthed) return;
+  document.getElementById('accountMenu').classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  const menu = document.getElementById('accountMenu');
+  const wrap = document.getElementById('accountWrap');
+  if (menu && wrap && !wrap.contains(e.target)) menu.classList.remove('open');
+});
 emailInput.addEventListener('input', () => {
   const val = emailInput.value.trim();
   const key = detectSchool(val);
   if (key !== loginSchool) { loginSchool = key; applyLoginTheme(key); }
   submitBtn.disabled = !(val.includes('@') && val.includes('.'));
 });
-
 emailInput.addEventListener('keydown', e => {
   if (e.key === 'Enter' && !submitBtn.disabled) handleSubmit();
 });
-
 function fillDemo(key) {
   emailInput.value = { columbia:'emma@columbia.edu', nyu:'alex@nyu.edu' }[key];
   emailInput.dispatchEvent(new Event('input'));
   emailInput.focus();
 }
-
-/* ── Login → Dashboard transition ── */
-/* ── Login → Dashboard transition (now talks to backend) ── */
+function showLogin() {
+  previousView = currentView === 'login' ? 'home' : currentView;
+  document.body.classList.add('view-login');
+  document.getElementById('screenLogin').classList.add('visible');
+  document.getElementById('screenDashboard').classList.add('login-open');
+  applyLoginTheme(loginSchool || school);
+}
+function openLogin() { showLogin(); }
+function closeLogin() { hideLogin(); }
+function hideLogin() {
+  document.getElementById('screenLogin').classList.remove('visible');
+  document.getElementById('screenDashboard').classList.remove('login-open');
+  document.body.classList.remove('view-login');
+  setTheme(school);
+  setView(previousView || 'home', { skipMap:true });
+}
 async function handleSubmit() {
   if (submitBtn.disabled) return;
-  const email = emailInput.value.trim();
   const key = loginSchool || 'columbia';
-  const cfg = SCHOOL_CFG[key];
+  const session = await BiteServices.auth.login({ email:emailInput.value.trim(), school:key });
+  syncAuthState(session);
+  showToast(`${session.emoji}  ${session.greeting}`);
+  hideLogin();
+  applyAuthUI();
+  resetDiscovery();
+  await setView('home', { skipMap:true });
+  const cfg = SCHOOL_CFG[school];
+  if (mapInstance) mapInstance.flyTo(cfg.center, cfg.zoom, { duration:.8 });
+  buildDeals();
+  await buildList();
+  await renderFavourites();
+  requestLocation();
+}
+async function restoreAuth() {
+  const saved = await BiteServices.auth.getMe();
+  if (saved && saved.isAuthed && SCHOOL_CFG[saved.school]) syncAuthState(saved);
+  else syncAuthState({ isAuthed:false, user:null, school:'columbia' });
+}
+async function logout() {
+  document.getElementById('accountMenu').classList.remove('open');
+  syncAuthState(await BiteServices.auth.logoutUser({ clearUserData:true }));
+  favState = await BiteServices.favourites.getFavourites();
+  checkedInSet = new Set(await BiteServices.checkins.getMyCheckins());
+  checkedIn = checkedInSet;
+  activeId = null;
+  selectedRestaurant = null;
+  applyAuthUI();
+  await setView('home', { skipMap:true });
+  await buildList();
+  await renderFavourites();
+  showLogin();
+}
+async function switchAccount() {
+  document.getElementById('accountMenu').classList.remove('open');
+  syncAuthState(await BiteServices.auth.switchUser());
+  applyAuthUI();
+  showLogin();
+}
 
-  // 1. Try to log in. If user doesn't exist (404), auto-register.
-  try {
-    let res = await fetch(`${API_BASE}/api/users/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email })
-    });
-
-    if (res.status === 404) {
-      // New user — auto-register with email-derived name
-      const name = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-      res = await fetch(`${API_BASE}/api/users/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, school: key })
-      });
-    }
-
-    if (!res.ok) throw new Error('Login failed');
-    currentUser = await res.json();
-    localStorage.setItem('currentUser', JSON.stringify(currentUser));
-    console.log('Logged in as:', currentUser);
-  } catch (err) {
-    console.error(err);
-    showToast('⚠️ Could not connect to server');
+function loadFavState() {
+  return favState;
+}
+async function saveFavState() {
+  favState = await BiteServices.favourites.saveFavourites(favState);
+}
+function isFavourite(id) {
+  return favState.favourites.some(f => f.id === id);
+}
+async function addFavourite(id, lists) {
+  if (!isAuthed) {
+    showToast('Please sign in to save favourites');
+    return false;
+  }
+  favState = await BiteServices.favourites.addFavourite(id, lists || ['all']);
+  await renderFavourites();
+  updateFavouriteUI();
+  return true;
+}
+async function removeFavourite(id, listId) {
+  favState = await BiteServices.favourites.removeFavourite(id, listId);
+  await renderFavourites();
+  updateFavouriteUI();
+  await buildList();
+}
+function inferFavLists(r) {
+  const lists = ['all'];
+  if (r.moods.includes('date')) lists.push('date');
+  if (r.moods.includes('quick')) lists.push('quick');
+  if (r.tags.includes('study')) lists.push('study');
+  return lists;
+}
+async function toggleFavourite(id) {
+  if (!id) return;
+  const r = findRestaurant(id);
+  if (!r) return;
+  if (!isAuthed) {
+    showToast('Please sign in to save favourites');
     return;
   }
+  if (isFavourite(id)) {
+    await removeFavourite(id);
+    showToast(`${r.name} removed`);
+  } else {
+    await addFavourite(id, inferFavLists(r));
+    showToast(`${r.name} saved`);
+  }
+  updateMarkers(currentView === 'map' ? await getMapFilteredRests() : currentRests);
+}
 
-  showToast(`${cfg.emoji}  ${cfg.greeting}`);
-
-  school = key;
-  applyDashTheme();
-  buildDeals();
-
-  // Show dashboard
-  document.getElementById('screenLogin').classList.add('hidden');
-  document.getElementById('screenDashboard').classList.add('visible');
-
-  // Init or fly map after a frame
-  setTimeout(() => {
-    if (!mapBooted) {
-      initMap();
-      mapBooted = true;
+function resetDiscovery() {
+  activeMood = null;
+  activeFilter = 'all';
+  searchQuery = '';
+  activeId = null;
+  document.getElementById('searchInput').value = '';
+  document.getElementById('mapSearchInput').value = '';
+  syncFilterUI();
+  setRankingMode('all', document.getElementById('rankAll'));
+}
+async function setView(view, opts = {}) {
+  if (view === 'favourites' && !isAuthed) {
+    showToast('Sign in to save your favourites');
+  }
+  currentView = view;
+  document.body.classList.remove('view-home', 'view-detail', 'view-favourites', 'view-map', 'view-login');
+  document.body.classList.add(view === 'favourites' ? 'view-favourites' : view === 'detail' ? 'view-detail' : view === 'map' ? 'view-map' : 'view-home');
+  document.getElementById('tabDiscover').classList.toggle('active', view === 'home' || (view === 'detail' && detailReturnView === 'home'));
+  document.getElementById('tabMap').classList.toggle('active', view === 'map' || (view === 'detail' && detailReturnView === 'map'));
+  document.getElementById('tabFavourites').classList.toggle('active', view === 'favourites' || (view === 'detail' && detailReturnView === 'favourites'));
+  if (!opts.skipMap && mapInstance && view !== 'detail') {
+    const cfg = SCHOOL_CFG[school];
+    activeId = null;
+    if (view === 'map') {
+      await enterMapMode();
     } else {
-      mapInstance.flyTo(cfg.center, cfg.zoom, { duration: 1 });
+      mapInstance.flyTo(cfg.center, view === 'favourites' ? cfg.zoom - .2 : cfg.zoom, { duration:.7 });
+      await buildList();
     }
-    activeMood = null; activeFilter = 'all'; activeId = null;
-    document.querySelectorAll('.mood-chip').forEach(c => c.classList.remove('active'));
-    document.querySelectorAll('.filter-chip').forEach((c, i) => c.classList.toggle('active', i === 0));
-    setSideView('list');
-    buildList();
-  }, 80);
+  }
+  if (view === 'favourites') await renderFavourites();
+  if (view === 'map' && opts.skipMap) {
+    enableMapInteractions();
+    mapInstance.invalidateSize();
+    updateMarkers(await getMapFilteredRests());
+  }
 }
-
-function goToLogin() {
-  // Logo click → back to login
-  document.getElementById('screenLogin').classList.remove('hidden');
-  document.getElementById('screenDashboard').classList.remove('visible');
-  // reset login form appearance
-  applyLoginTheme(school);
-  emailInput.value = { columbia:'emma@columbia.edu', nyu:'alex@nyu.edu' }[school] || '';
-  emailInput.dispatchEvent(new Event('input'));
+async function enterMapMode() {
+  if (!mapInstance) return;
+  const focus = SCHOOL_FOCUS[school] || SCHOOL_FOCUS.columbia;
+  syncFilterUI();
+  enableMapInteractions();
+  mapInstance.invalidateSize();
+  updateMarkers(await getMapFilteredRests());
+  addUserMarkerToMap();
+  mapInstance.flyTo([focus.lat, focus.lng], focus.zoom, { animate:true, duration:.7 });
 }
-
-/* ══════════════════════════════════════════
-   DASHBOARD STATE
-══════════════════════════════════════════ */
-/* ══════════════════════════════════════════
-   GLOBAL USER STATE (added for backend integration)
-══════════════════════════════════════════ */
-let currentUser = null;  // populated after login: { id, name, email, school, theme, friends }
-const API_BASE = '';     // empty = same origin (server serves both API and static files)
-let school       = 'columbia';
-let activeMood   = null;
-let activeFilter = 'all';
-let sideView     = 'list';
-let activeId     = null;
-let checkedIn    = new Set();
-let mapInstance  = null;
-let markers      = {};
-let currentRests = [];
-let mapBooted    = false;
-
-// swipe
-let swipeIdx=0, swipeSaved=[], swipePool=[];
-
-function dashInit() {
-  // kept for back-compat; real init now happens in handleSubmit
+async function goHome() {
+  await closeDetail();
+  await setView('home');
 }
+async function goBack() { await closeDetail(); }
 
-function applyDashTheme() {
-  const s = SCHOOL_CFG[school];
-  const r = document.documentElement;
-  r.style.setProperty('--p',      s.primary);
-  r.style.setProperty('--p-tint', s.tint);
-  r.style.setProperty('--p-mid',  s.mid);
-  document.getElementById('navSchoolBadge').textContent = s.short;
-  document.getElementById('navAvatar').textContent      = s.avatar;
-  document.getElementById('navLogoIcon').style.background = s.primary;
-  document.getElementById('sidebarTitle').textContent   = `Near ${s.short}`;
+async function setMood(el, key) {
+  if (activeMood === key) {
+    activeMood = null;
+  } else {
+    activeMood = key;
+  }
+  syncFilterUI();
+  await refreshDiscoveryViews();
 }
-
-/* nav tabs */
-function setNavTab(tab) {
-  if (tab === 'friends') { window.location.href = '/leaderboard.html'; return; }
-  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-  const el = document.getElementById('tab'+tab[0].toUpperCase()+tab.slice(1));
-  if (el) el.classList.add('active');
-  if (tab !== 'discover') showToast('Coming soon — stay tuned! 👀');
+async function setRankingMode(mode, el) {
+  rankingMode = mode;
+  const titles = { all:'All Restaurants', heat:'Heat Ranking', month:'Monthly Ranking', week:'Weekly Ranking', checkin:'Check-in Ranking' };
+  document.getElementById('rankingTitle').textContent = titles[mode] || 'Restaurant Picks';
+  syncFilterUI();
+  await refreshDiscoveryViews();
 }
-
-/* mood */
-function setMood(el, key) {
-  if (activeMood===key) { activeMood=null; el.classList.remove('active'); }
-  else { document.querySelectorAll('.mood-chip').forEach(c=>c.classList.remove('active')); el.classList.add('active'); activeMood=key; }
-  buildList();
-  if (sideView==='swipe') resetSwipePool();
+async function setFilter(el, key) {
+  activeFilter = key;
+  syncFilterUI();
+  await refreshDiscoveryViews();
 }
-
-/* side view */
-function setSideView(v) {
-  sideView = v;
-  document.getElementById('sbList').classList.toggle('active',  v==='list');
-  document.getElementById('sbSwipe').classList.toggle('active', v==='swipe');
-  document.getElementById('restList').style.display  = v==='list'  ? '' : 'none';
-  document.getElementById('swipePanel').classList.toggle('visible', v==='swipe');
-  document.getElementById('filterRow').style.display = v==='list'  ? '' : 'none';
-  if (v==='swipe') resetSwipePool();
+document.getElementById('searchInput').addEventListener('input', async () => {
+  searchQuery = document.getElementById('searchInput').value;
+  document.getElementById('mapSearchInput').value = searchQuery;
+  await refreshDiscoveryViews();
+});
+document.getElementById('mapSearchInput').addEventListener('input', async () => {
+  searchQuery = document.getElementById('mapSearchInput').value;
+  document.getElementById('searchInput').value = searchQuery;
+  await refreshDiscoveryViews();
+});
+function syncFilterUI() {
+  document.querySelectorAll('.stoggle-btn[data-rank]').forEach(btn => btn.classList.toggle('active', btn.dataset.rank === rankingMode));
+  document.querySelectorAll('.mood-chip[data-mood]').forEach(btn => btn.classList.toggle('active', !!activeMood && btn.dataset.mood === activeMood));
+  document.querySelectorAll('.filter-chip[data-price]').forEach(btn => btn.classList.toggle('active', btn.dataset.price === activeFilter));
 }
-
-/* filter */
-function setFilter(el, key) {
-  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active'); activeFilter=key; buildList();
+async function refreshDiscoveryViews() {
+  if (currentView === 'map') {
+    const rests = await getMapFilteredRests();
+    updateMarkers(rests);
+    if (!rests.length) showToast('No restaurants match these filters');
+    return;
+  }
+  await buildList();
 }
-
-/* search */
-document.getElementById('searchInput').addEventListener('input', buildList);
-
-/* data */
-function getFilteredRests() {
-  let rests = ALL_RESTAURANTS[school] || [];
-  if (activeMood) rests = rests.filter(r=>r.moods.includes(activeMood));
-  if (activeFilter!=='all') rests = rests.filter(r=>r.tags.includes(activeFilter));
-  const q = document.getElementById('searchInput').value.toLowerCase().trim();
-  if (q) rests = rests.filter(r=>r.name.toLowerCase().includes(q)||r.category.toLowerCase().includes(q)||r.tags.some(t=>t.includes(q)));
-  return rests.sort((a,b)=>b.rating-a.rating);
+async function getFilteredRests() {
+  const rests = await BiteServices.restaurants.getRestaurants({
+    school,
+    mood:activeMood,
+    price:activeFilter,
+    query:searchQuery
+  });
+  return sortByRanking(rests);
 }
-
-function buildList() {
-  currentRests = getFilteredRests();
-  const sub = activeMood
-    ? `${currentRests.length} spots matching "${MOOD_TAG[activeMood]}"`
-    : `${currentRests.length} spot${currentRests.length!==1?'s':''} · sorted by rating`;
-  document.getElementById('sidebarSub').textContent = sub;
+async function getMapFilteredRests() {
+  const rests = await BiteServices.restaurants.getMapRestaurants({
+    mood:activeMood,
+    price:activeFilter,
+    query:searchQuery
+  });
+  return sortByRanking(rests);
+}
+function rankingScore(r) {
+  const mockHeat = r.rating * 100 + (r.tags.includes('toprated') ? 24 : 0) + (r.moods.includes('latenight') ? 10 : 0);
+  const mockMonth = ((r.id * 37) % 80) + r.rating * 12;
+  const mockWeek = ((r.id * 19) % 60) + (r.moods.includes('quick') ? 25 : 0) + r.rating * 8;
+  const mockCheckin = (checkedInSet.has(r.id) ? 1000 : 0) + ((r.id * 23) % 90) + r.rating;
+  return { heat:mockHeat, month:mockMonth, week:mockWeek, checkin:mockCheckin }[rankingMode] || mockHeat;
+}
+function sortByRanking(rests) {
+  if (rankingMode === 'all') return rests.sort((a, b) => b.rating - a.rating);
+  return rests.sort((a, b) => rankingScore(b) - rankingScore(a));
+}
+async function setMapFilter(el, key) {
+  await setFilter(el, key);
+}
+function getDistanceLabel(r) {
+  if (!userLocation) return r.dist;
+  return `${calculateDistance(userLocation.lat, userLocation.lng, r.lat, r.lng)} mi from you`;
+}
+async function buildList() {
   const el = document.getElementById('restList');
-  if (!currentRests.length) { el.innerHTML=`<div style="padding:28px 16px;text-align:center;color:var(--ink-3);font-size:14px">No spots match — try a different filter.</div>`;updateMarkers([]);return; }
-  el.innerHTML = currentRests.map((r,i)=>`
-    <div class="rest-card ${activeId===r.id?'active':''}" style="animation-delay:${i*.04}s" onclick="selectRestaurant(${r.id})">
-      ${checkedIn.has(r.id)?'<div class="checkin-badge">✓ Checked in</div>':''}
+  el.innerHTML = '<div class="empty-state">Loading restaurants...</div>';
+  currentRests = await getFilteredRests();
+  if (!currentRests.length) {
+    el.innerHTML = '<div class="empty-state">No spots match. Try a different mood, price, or search.</div>';
+    updateMarkers([]);
+    return;
+  }
+  el.innerHTML = currentRests.map((r, i) => `
+    <div class="rest-card ${activeId === r.id ? 'active' : ''}" style="animation-delay:${i * .04}s" onclick="selectRestaurant(${r.id}, this)">
+      ${checkedInSet.has(r.id) ? '<div class="checkin-badge">✓ Checked in</div>' : ''}
       <div class="rest-card-top"><div class="rest-card-name">${r.name}</div><div class="rest-card-price">${r.price}</div></div>
       <div class="rest-card-meta">
         <span class="rest-card-rating"><span class="star">★</span> ${r.rating}</span>
         <div class="rest-card-dot"></div><span>${r.category}</span>
-        <div class="rest-card-dot"></div><span>${r.dist}</span>
+        <div class="rest-card-dot"></div><span>${getDistanceLabel(r)}</span>
       </div>
-      <div class="rest-card-tags">${r.tags.map(t=>`<span class="rest-tag">${tagLabel(t)}</span>`).join('')}</div>
+      <div class="rest-card-tags">${r.tags.map(t => `<span class="rest-tag">${tagLabel(t)}</span>`).join('')}</div>
     </div>`).join('');
   updateMarkers(currentRests);
 }
-
-function tagLabel(t){return{cheap:'$ Cheap',latenight:'🌙 Late Night',study:'📖 Study',healthy:'🥗 Healthy',toprated:'⭐ Top Rated'}[t]||t;}
-
-/* map */
+function tagLabel(t) {
+  return { cheap:'$ Cheap', latenight:'Late Night', study:'Study', healthy:'Healthy', toprated:'Top Rated' }[t] || t;
+}
+function findRestaurant(id) {
+  // Use the live backend data if available; fall back to the hardcoded list
+  const source = window.BITE_RESTAURANTS || ALL_RESTAURANTS;
+  return Object.values(source).flat().find(r => r.id === Number(id));
+}
+function getAllRestaurants() {
+  const source = window.BITE_RESTAURANTS || ALL_RESTAURANTS;
+  return Object.values(source).flat();
+}
 function initMap() {
-  const s = SCHOOL_CFG[school];
-  mapInstance = L.map('map',{center:s.center,zoom:s.zoom,zoomControl:false,attributionControl:false});
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(mapInstance);
+  const cfg = SCHOOL_CFG[school];
+  mapInstance = L.map('map', {
+    center:cfg.center,
+    zoom:cfg.zoom,
+    zoomControl:false,
+    attributionControl:false,
+    dragging:true,
+    scrollWheelZoom:true,
+    doubleClickZoom:true,
+    touchZoom:true,
+    boxZoom:true,
+    keyboard:true
+  });
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom:19 }).addTo(mapInstance);
+  enableMapInteractions();
+  setupMapCardInteractions();
   setTimeout(() => mapInstance.invalidateSize(), 100);
   buildList();
+  addUserMarkerToMap();
 }
-function makeIcon(color,active){
-  const sz=active?34:28;
-  return L.divIcon({className:'',html:`<div style="width:${sz}px;height:${sz}px;border-radius:50% 50% 50% 0;background:${color};border:${active?'3px':'2px'} solid white;box-shadow:0 ${active?6:3}px ${active?18:10}px rgba(0,0,0,${active?.28:.18});transform:rotate(-45deg);transition:all .25s"></div>`,iconSize:[sz,sz],iconAnchor:[sz/2,sz],popupAnchor:[0,-sz-4]});
+function enableMapInteractions() {
+  if (!mapInstance) return;
+  const container = mapInstance.getContainer();
+  container.style.pointerEvents = 'auto';
+  container.style.touchAction = 'pan-x pan-y pinch-zoom';
+  mapInstance.dragging.enable();
+  mapInstance.scrollWheelZoom.enable();
+  mapInstance.doubleClickZoom.enable();
+  mapInstance.touchZoom.enable();
+  mapInstance.boxZoom.enable();
+  mapInstance.keyboard.enable();
 }
-function updateMarkers(rests){
-  const s=SCHOOL_CFG[school];
-  Object.values(markers).forEach(m=>m.remove());markers={};
-  rests.forEach(r=>{
-    const active=r.id===activeId;
-    const m=L.marker([r.lat,r.lng],{icon:makeIcon(s.primary,active)}).addTo(mapInstance);
-    m.bindPopup(`<div class="map-popup" onclick="selectRestaurant(${r.id})"><div class="map-popup-name">${r.name}</div><div class="map-popup-sub"><span class="star">★</span>${r.rating}<span style="opacity:.3">·</span>${r.price}<span style="opacity:.3">·</span>${r.dist}</div></div>`,{closeButton:false,maxWidth:220});
-    m.on('click',()=>selectRestaurant(r.id));markers[r.id]=m;
+function setupMapCardInteractions() {
+  const card = document.getElementById('mapSearchCard');
+  if (!card || !window.L) return;
+  L.DomEvent.disableClickPropagation(card);
+  L.DomEvent.disableScrollPropagation(card);
+}
+function makeIcon(color, active) {
+  const sz = active ? 34 : 28;
+  return L.divIcon({
+    className:'',
+    html:`<div class="marker-pin ${active ? 'active' : ''}" style="width:${sz}px;height:${sz}px;background:${color};"></div>`,
+    iconSize:[sz, sz],
+    iconAnchor:[sz / 2, sz],
+    popupAnchor:[0, -sz - 4]
   });
 }
-function selectRestaurant(id){
-  activeId=id;
-  const r=ALL_RESTAURANTS[school].find(x=>x.id===id);
-  if(!r)return;
-  buildList();updateMarkers(currentRests);
-  mapInstance.flyTo([r.lat,r.lng],16,{duration:.8});
-  setTimeout(()=>markers[id]&&markers[id].openPopup(),200);
-  openDetail(r);
+function updateMarkers(rests) {
+  if (!mapInstance) return;
+  enableMapInteractions();
+  const cfg = SCHOOL_CFG[school];
+  Object.values(markers).forEach(m => m.remove());
+  markers = {};
+  rests.forEach(r => {
+    const active = r.id === activeId;
+    const color = isAuthed ? cfg.primary : '#555555';
+    const m = L.marker([r.lat, r.lng], { icon:makeIcon(color, active) }).addTo(mapInstance);
+    m.bindPopup(`<div class="map-popup" onclick="selectRestaurant(${r.id})"><div class="map-popup-name">${r.name}</div><div class="map-popup-sub"><span class="star">★</span>${r.rating}<span style="opacity:.3">·</span>${r.price}<span style="opacity:.3">·</span>${getDistanceLabel(r)}</div></div>`, { closeButton:false, maxWidth:220 });
+    m.on('click', () => selectRestaurant(r.id));
+    markers[r.id] = m;
+  });
 }
-
-/* detail */
-function openDetail(r){
-  document.getElementById('dCategory').textContent=r.category;
-  document.getElementById('dName').textContent=r.name;
-  document.getElementById('dRating').textContent=r.rating;
-  document.getElementById('dPrice').textContent=r.price;
-  document.getElementById('dDist').textContent=r.dist;
-  document.getElementById('dDesc').textContent=r.desc;
-  document.getElementById('dTags').innerHTML=r.tags.map(t=>`<span class="detail-tag">${tagLabel(t)}</span>`).join('');
-  document.getElementById('dHours').innerHTML=r.hours.map(([d,t])=>`<div class="detail-hours-row"><span class="detail-hours-day">${d}</span><span>${t}</span></div>`).join('');
-  const btn=document.getElementById('checkinBtn');
-  btn.innerHTML=checkedIn.has(r.id)?'✓ Checked In':'📍 Check In';
-  btn.classList.toggle('checked',checkedIn.has(r.id));
-  document.getElementById('detailPanel').classList.add('open');
+async function fitAllMapMarkers() {
+  if (!mapInstance) return;
+  const rests = await getMapFilteredRests();
+  if (!rests.length) return;
+  const bounds = L.latLngBounds(rests.map(r => [r.lat, r.lng]));
+  mapInstance.fitBounds(bounds, {
+    paddingTopLeft:[40, 140],
+    paddingBottomRight:[40, 48],
+    maxZoom:15
+  });
 }
-function closeDetail(){document.getElementById('detailPanel').classList.remove('open');activeId=null;buildList();updateMarkers(currentRests);}
-async function doCheckin(){
-  if(!activeId||checkedIn.has(activeId))return;
-  if(!currentUser){ showToast('⚠️ Please log in first'); return; }
-  const r=ALL_RESTAURANTS[school].find(x=>x.id===activeId);
-  if(!r)return;
-
-  // Optimistic UI update — feels instant
-  checkedIn.add(activeId);
-  document.getElementById('checkinBtn').innerHTML='✓ Checked In';
-  document.getElementById('checkinBtn').classList.add('checked');
-  buildList();
-  showToast(`Checked in at ${r.name}! 📍`);
-
-  // Persist to backend
-  try {
-    await fetch(`${API_BASE}/api/checkins`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        user_id: currentUser.id,
-        restaurant_place_id: `mock_${r.id}`,
-        restaurant_name: r.name,
-        school: school
-      })
-    });
-  } catch (err) {
-    console.error('Failed to save check-in:', err);
+function focusRestaurantWithSafeOffset(lat, lng, zoom = 17) {
+  if (!mapInstance) return;
+  const target = L.latLng(lat, lng);
+  const isMobile = window.innerWidth < 768;
+  const mapSize = mapInstance.getSize();
+  const detailSheet = document.getElementById('detailSheet');
+  let desiredX;
+  let desiredY;
+  if (!isMobile) {
+    const panelWidth = detailSheet ? detailSheet.offsetWidth : Math.round(mapSize.x * .38);
+    const usableMapWidth = Math.max(320, mapSize.x - panelWidth);
+    desiredX = usableMapWidth * .5;
+    desiredY = mapSize.y * .45;
+  } else {
+    const sheetHeight = detailSheet ? detailSheet.offsetHeight : 0;
+    const reservedBottom = Math.min(mapSize.y * .78, sheetHeight + 24);
+    const safeHeight = Math.max(180, mapSize.y - reservedBottom);
+    desiredX = mapSize.x / 2;
+    desiredY = Math.max(110, safeHeight * .45);
   }
+  const targetPoint = mapInstance.project(target, zoom);
+  const centerPoint = L.point(
+    targetPoint.x - (desiredX - mapSize.x / 2),
+    targetPoint.y - (desiredY - mapSize.y / 2)
+  );
+  const shiftedLatLng = mapInstance.unproject(centerPoint, zoom);
+  mapInstance.flyTo(shiftedLatLng, zoom, { animate:true, duration:.6 });
 }
-function saveRestaurant(){if(!activeId)return;const r=ALL_RESTAURANTS[school].find(x=>x.id===activeId);showToast(`${r?.name} saved ♡`);}
+async function selectRestaurant(id, card) {
+  if (card) {
+    card.classList.add('pressed');
+    setTimeout(() => card.classList.remove('pressed'), 180);
+  }
+  const r = findRestaurant(id);
+  if (!r) return;
+  if (currentView !== 'detail') detailReturnView = currentView;
+  activeId = r.id;
+  selectedRestaurant = r;
+  await updateCurrentRestIndex();
+  await updateNavButtons();
+  if (detailReturnView === 'map') updateMarkers(await getMapFilteredRests());
+  else { await buildList(); updateMarkers(currentRests); }
+  setTimeout(() => {
+    setView('detail', { skipMap:true });
+    openDetail(r);
+    requestAnimationFrame(() => focusRestaurantWithSafeOffset(r.lat, r.lng, 17));
+    setTimeout(() => markers[r.id] && markers[r.id].openPopup(), 240);
+  }, card ? 120 : 0);
+}
+async function openDetail(r) {
+  document.getElementById('detailHero').style.backgroundImage = `linear-gradient(135deg, rgba(17,17,17,.18), rgba(17,17,17,.5)), url('${r.hero}')`;
+  document.getElementById('dCategory').textContent = r.category;
+  document.getElementById('dName').textContent = r.name;
+  document.getElementById('dRating').textContent = r.rating;
+  document.getElementById('dPrice').textContent = r.price;
+  document.getElementById('dDist').textContent = getDistanceLabel(r);
+  selectedRestaurant = r;
+  document.getElementById('dGoodFor').innerHTML = Array.from(new Set([...r.moods.map(m => MOOD_TAG[m]), ...r.tags.map(t => GOOD_FOR[t] || tagLabel(t))])).slice(0, 6).map(t => `<span class="detail-tag">${t}</span>`).join('');
+  document.getElementById('dNeighborhood').textContent = r.neighborhood;
+  document.getElementById('dDesc').textContent = r.desc;
+  document.getElementById('dTags').innerHTML = r.tags.map(t => `<span class="detail-tag">${tagLabel(t)}</span>`).join('');
+  document.getElementById('dAddress').textContent = r.address;
+  document.getElementById('reviewInput').value = '';
+  currentReviewRating = 5;
+  setReviewRating(5);
+  await renderReviews(r);
+  updateCheckinUI();
+  updateFavouriteUI();
+  await updateNavButtons();
+}
+async function closeDetail() {
+  if (currentView !== 'detail') return;
+  const cfg = SCHOOL_CFG[school];
+  document.body.classList.remove('view-detail');
+  const returnView = detailReturnView || 'home';
+  document.body.classList.add(returnView === 'map' ? 'view-map' : returnView === 'favourites' ? 'view-favourites' : 'view-home');
+  currentView = returnView;
+  document.getElementById('tabDiscover').classList.toggle('active', returnView === 'home');
+  document.getElementById('tabMap').classList.toggle('active', returnView === 'map');
+  document.getElementById('tabFavourites').classList.toggle('active', returnView === 'favourites');
+  if (mapInstance && returnView !== 'map') mapInstance.flyTo(cfg.center, cfg.zoom, { duration:.75 });
+  setTimeout(() => {
+    (async () => {
+      activeId = null;
+      selectedRestaurant = null;
+      if (returnView === 'map') updateMarkers(await getMapFilteredRests());
+      else { await buildList(); updateMarkers(currentRests); }
+    })();
+  }, 260);
+}
+function updateFavouriteUI() {
+  const btn = document.getElementById('favHeroBtn');
+  const saved = activeId && isFavourite(activeId);
+  btn.classList.toggle('saved', !!saved);
+  btn.textContent = saved ? '❤' : '♡';
+}
+function updateCheckinUI() {
+  const btn = document.getElementById('checkinBtn');
+  const checked = activeId && checkedInSet.has(activeId);
+  btn.innerHTML = checked ? '✓ Checked In' : '📍 Check In';
+  btn.classList.toggle('checked', !!checked);
+}
+async function toggleCheckin(id) {
+  if (!id) return false;
+  if (checkedInSet.has(id)) {
+    checkedInSet = new Set(await BiteServices.checkins.removeCheckin(id));
+    checkedIn = checkedInSet;
+    showToast('Check-in removed');
+    return false;
+  }
+  checkedInSet = new Set(await BiteServices.checkins.createCheckin(id));
+  checkedIn = checkedInSet;
+  showToast('Checked in');
+  return true;
+}
+async function doCheckin() {
+  if (!activeId) return;
+  await toggleCheckin(activeId);
+  const r = findRestaurant(activeId);
+  updateCheckinUI();
+  await buildList();
+  updateMarkers(currentView === 'map' ? await getMapFilteredRests() : currentRests);
+}
+let currentReviewRating = 5;  // default; user can tap stars to change
+function setReviewRating(value) {
+  currentReviewRating = value;
+  document.querySelectorAll('.rating-star').forEach(s => {
+    s.classList.toggle('filled', Number(s.dataset.value) <= value);
+  });
+  const labels = { 1:'Pretty bad', 2:'Meh', 3:'Decent', 4:'Great', 5:'Loved it' };
+  document.getElementById('ratingLabel').textContent = labels[value] || 'Tap to rate';
+}
+function hoverReviewRating(value) {
+  if (value === 0) {
+    // reset to current selection on mouse leave
+    document.querySelectorAll('.rating-star').forEach(s => {
+      s.classList.toggle('filled', Number(s.dataset.value) <= currentReviewRating);
+    });
+    return;
+  }
+  document.querySelectorAll('.rating-star').forEach(s => {
+    s.classList.toggle('filled', Number(s.dataset.value) <= value);
+  });
+}
+async function submitReview() {
+  if (!activeId) return;
+  const input = document.getElementById('reviewInput');
+  const text = input.value.trim();
+  if (!text) return showToast('Write a quick note first');
+  await BiteServices.reviews.createReview(activeId, {
+    author: authState.user?.name || (isAuthed ? 'You' : 'Guest'),
+    text,
+    rating: currentReviewRating
+  });
+  input.value = '';
+  // Reset rating UI back to default for next review
+  currentReviewRating = 5;
+  setReviewRating(5);
+  await renderReviews(findRestaurant(activeId));
+  showToast('Review added');
+}
+async function renderReviews(r) {
+  const saved = await BiteServices.reviews.getReviews(r.id);
+  const base = (r.reviews || []).map(text => ({ author:'BITE student', text }));
+  document.getElementById('reviewList').innerHTML = [...saved, ...base].map(x => `<div class="review-item"><div class="review-author">${x.author}</div><div class="review-text">${x.text}</div></div>`).join('');
+}
 
-/* swipe */
-function resetSwipePool(){
-  swipePool=getFilteredRests().slice();swipeIdx=0;swipeSaved=[];
-  document.getElementById('swipeDone').style.display='none';
-  document.getElementById('swipeStack').style.display='';
-  document.getElementById('swipeActions').style.display='';
-  renderSwipeCard();renderSwipePips();renderSwipeSaved();
+async function requestLocation() {
+  if (!('geolocation' in navigator)) return;
+  if (userLocation || await BiteServices.location.getPrompted()) return;
+  setTimeout(showLocationModal, 450);
 }
-function renderSwipePips(){
-  document.getElementById('swipePips').innerHTML=swipePool.map((_,i)=>{
-    const cls=i<swipeIdx?'done':i===swipeIdx?'current':'';
-    return`<div class="swipe-pip ${cls}"></div>`;
-  }).join('');
+async function showLocationModal() {
+  await BiteServices.location.setPrompted();
+  document.getElementById('locationModal').classList.add('visible');
 }
-function renderSwipeCard(){
-  if(swipeIdx>=swipePool.length){showSwipeDone();return;}
-  const r=swipePool[swipeIdx],r2=swipePool[swipeIdx+1];
-  document.getElementById('sfcCat').textContent=r.category;
-  document.getElementById('sfcName').textContent=r.name;
-  document.getElementById('sfcTag').textContent=r.desc.slice(0,70)+(r.desc.length>70?'…':'');
-  document.getElementById('sfcBadges').innerHTML=[r.price,...r.moods.map(m=>MOOD_TAG[m])].map(b=>`<span class="sfc-badge">${b}</span>`).join('');
-  document.getElementById('swipeBack').style.display=r2?'':'none';
-  document.getElementById('swipeCounter').textContent=`${swipeIdx+1} / ${swipePool.length}`;
-  const fc=document.getElementById('swipeFront');
-  fc.style.transition='';fc.style.transform='';fc.style.opacity='';
-  document.getElementById('swipeSaveLbl').style.opacity='0';
-  document.getElementById('swipeSkipLbl').style.opacity='0';
+function closeLocationModal() {
+  document.getElementById('locationModal').classList.remove('visible');
 }
-function showSwipeDone(){
-  document.getElementById('swipeStack').style.display='none';
-  document.getElementById('swipeActions').style.display='none';
-  document.getElementById('swipeDone').style.display='flex';
-  document.getElementById('swipeDoneSub').textContent=swipeSaved.length?`You saved ${swipeSaved.length} spot${swipeSaved.length>1?'s':''}!`:'Nothing saved — try again?';
+function getUserLocation() {
+  if (!('geolocation' in navigator)) {
+    showToast('Location is not available in this browser');
+    closeLocationModal();
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    async position => {
+      userLocation = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      };
+      await BiteServices.location.saveLocation(userLocation);
+      closeLocationModal();
+      await updateAllDistances();
+      addUserMarkerToMap();
+      showToast('Location enabled');
+    },
+    () => {
+      closeLocationModal();
+      showToast('Location access denied');
+    },
+    { enableHighAccuracy:true, timeout:10000, maximumAge:60000 }
+  );
 }
-function swipeAdvance(action){
-  if(swipeIdx>=swipePool.length)return;
-  const r=swipePool[swipeIdx],fc=document.getElementById('swipeFront');
-  if(action==='save'){swipeSaved.push(r);fc.style.transition='transform .3s var(--ease),opacity .3s';fc.style.transform='translateX(140%) rotate(14deg)';fc.style.opacity='0';document.getElementById('swipeSaveLbl').style.opacity='1';showToast(`${r.name} saved ✓`);}
-  else{fc.style.transition='transform .3s var(--ease),opacity .3s';fc.style.transform='translateX(-140%) rotate(-14deg)';fc.style.opacity='0';document.getElementById('swipeSkipLbl').style.opacity='1';}
-  setTimeout(()=>{swipeIdx++;renderSwipeCard();renderSwipePips();renderSwipeSaved();fc.style.transition='';},310);
+function calculateDistance(lat1, lng1, lat2, lng2) {
+  const R = 3959;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return (R * c).toFixed(1);
 }
-function swipeRestart(){resetSwipePool();}
-function renderSwipeSaved(){
-  const wrap=document.getElementById('swipeSaved');
-  if(!swipeSaved.length){wrap.style.display='none';return;}
-  wrap.style.display='';
-  document.getElementById('swipeSavedCount').textContent=swipeSaved.length;
-  document.getElementById('swipeSavedItems').innerHTML=swipeSaved.map(r=>`
-    <div class="swipe-saved-item" onclick="selectRestaurant(${r.id});setSideView('list')">
-      <span class="swipe-saved-name">${r.name}</span>
-      <span class="swipe-saved-meta">${r.price} · ${r.category}</span>
+async function updateAllDistances() {
+  if (currentView === 'map') updateMarkers(await getMapFilteredRests());
+  else await buildList();
+  if (activeId) await openDetail(findRestaurant(activeId));
+  await renderFavourites();
+}
+function addUserMarkerToMap() {
+  if (!mapInstance || !userLocation) return;
+  if (userMarker) userMarker.remove();
+  const userIcon = L.divIcon({
+    className:'user-marker',
+    html:'<div class="user-dot"></div>',
+    iconSize:[20, 20],
+    iconAnchor:[10, 10]
+  });
+  userMarker = L.marker([userLocation.lat, userLocation.lng], { icon:userIcon, zIndexOffset:1000 }).addTo(mapInstance);
+}
+function openNavigation() {
+  const r = selectedRestaurant || findRestaurant(activeId);
+  if (!r) return;
+  const dest = `${r.lat},${r.lng}`;
+  window.open(`https://www.google.com/maps/dir/?api=1&destination=${dest}`, '_blank');
+}
+async function getDetailPool() {
+  if (detailReturnView === 'map') return getMapFilteredRests();
+  if (detailReturnView === 'favourites') {
+    return favState.favourites
+      .filter(f => activeFavList === 'all' || (f.lists || []).includes(activeFavList))
+      .map(f => findRestaurant(f.id))
+      .filter(Boolean);
+  }
+  return currentRests.length ? currentRests : await getFilteredRests();
+}
+async function updateCurrentRestIndex() {
+  const pool = await getDetailPool();
+  currentRestIndex = Math.max(0, pool.findIndex(r => r.id === activeId));
+}
+async function updateNavButtons() {
+  const prevBtn = document.getElementById('prevRestBtn');
+  const nextBtn = document.getElementById('nextRestBtn');
+  if (!prevBtn || !nextBtn) return;
+  const pool = await getDetailPool();
+  currentRestIndex = pool.findIndex(r => r.id === activeId);
+  prevBtn.disabled = currentRestIndex <= 0;
+  nextBtn.disabled = currentRestIndex < 0 || currentRestIndex >= pool.length - 1;
+  prevBtn.title = currentRestIndex > 0 ? pool[currentRestIndex - 1].name : '';
+  nextBtn.title = currentRestIndex >= 0 && currentRestIndex < pool.length - 1 ? pool[currentRestIndex + 1].name : '';
+}
+async function prevRestaurant() {
+  const pool = await getDetailPool();
+  await updateCurrentRestIndex();
+  if (currentRestIndex <= 0) return;
+  selectRestaurant(pool[currentRestIndex - 1].id);
+}
+async function nextRestaurant() {
+  const pool = await getDetailPool();
+  await updateCurrentRestIndex();
+  if (currentRestIndex < 0 || currentRestIndex >= pool.length - 1) return;
+  selectRestaurant(pool[currentRestIndex + 1].id);
+}
+document.addEventListener('keydown', e => {
+  if (!document.body.classList.contains('view-detail')) return;
+  if (e.key === 'ArrowLeft') prevRestaurant();
+  if (e.key === 'ArrowRight') nextRestaurant();
+  if (e.key === 'Escape') closeDetail();
+});
+window.addEventListener('resize', () => {
+  if (!document.body.classList.contains('view-detail') || !selectedRestaurant) return;
+  clearTimeout(window.__biteResizeTimer);
+  window.__biteResizeTimer = setTimeout(() => {
+    focusRestaurantWithSafeOffset(selectedRestaurant.lat, selectedRestaurant.lng, mapInstance ? mapInstance.getZoom() : 17);
+  }, 160);
+});
+
+
+async function renderFavourites() {
+  favState = await BiteServices.favourites.getFavourites();
+  const tabs = document.getElementById('favTabs');
+  tabs.innerHTML = favState.lists.map(l => `<button class="fav-list-chip ${activeFavList === l.id ? 'active' : ''}" onclick="setFavouriteList('${l.id}')">${l.name}</button>`).join('');
+  const list = document.getElementById('favouritesList');
+  if (!isAuthed) {
+    list.innerHTML = '<div class="empty-state"><strong>No saved spots yet.</strong>Sign in to save your favourites.</div>';
+    return;
+  }
+  const favs = favState.favourites.filter(f => activeFavList === 'all' || (f.lists || []).includes(activeFavList)).map(f => findRestaurant(f.id)).filter(Boolean);
+  if (!favs.length) {
+    list.innerHTML = '<div class="empty-state"><strong>No favourites here.</strong>Save a restaurant from Discover to build this list.</div>';
+    return;
+  }
+  list.innerHTML = favs.map(r => `
+    <div class="fav-item" onclick="selectRestaurant(${r.id})">
+      <div><div class="fav-name">${r.name}</div><div class="fav-meta">${r.category} · ${r.price} · ${getDistanceLabel(r)} · ${r.neighborhood}</div></div>
+      <button class="fav-remove" onclick="event.stopPropagation();removeFavourite(${r.id}, '${activeFavList}')">×</button>
     </div>`).join('');
 }
-
-/* drag to swipe */
-(function(){
-  let startX=0,dragging=false;
-  const fc=document.getElementById('swipeFront');
-  fc.addEventListener('pointerdown',e=>{if(swipeIdx>=swipePool.length)return;startX=e.clientX;dragging=true;fc.setPointerCapture(e.pointerId);fc.style.transition='';});
-  fc.addEventListener('pointermove',e=>{
-    if(!dragging)return;
-    const dx=e.clientX-startX;
-    fc.style.transform=`translateX(${dx}px) rotate(${dx*.05}deg)`;
-    const pct=Math.min(Math.abs(dx)/80,1);
-    document.getElementById('swipeSaveLbl').style.opacity=dx>0?pct:0;
-    document.getElementById('swipeSkipLbl').style.opacity=dx<0?pct:0;
-  });
-  fc.addEventListener('pointerup',e=>{
-    if(!dragging)return;dragging=false;
-    const dx=e.clientX-startX;
-    if(dx>70)swipeAdvance('save');
-    else if(dx<-70)swipeAdvance('skip');
-    else{fc.style.transition='transform .3s var(--ease)';fc.style.transform='';document.getElementById('swipeSaveLbl').style.opacity='0';document.getElementById('swipeSkipLbl').style.opacity='0';}
-  });
-})();
-
-/* deals */
-function buildDeals(){
-  const deals=DEALS[school]||[];
-  document.getElementById('dealStrip').innerHTML=deals.map((d,i)=>`
-    <div class="deal-card" style="animation-delay:${i*.08}s">
+async function setFavouriteList(id) {
+  activeFavList = id;
+  await renderFavourites();
+}
+function buildDeals() {
+  const deals = DEALS[school] || [];
+  document.getElementById('dealStrip').innerHTML = deals.map((d, i) => `
+    <div class="deal-card" style="animation-delay:${i * .08}s">
       <div class="deal-icon ${d.type}">${d.icon}</div>
       <div class="deal-body"><div class="deal-label">${d.label}</div><div class="deal-title">${d.title}</div><div class="deal-time">${d.time}</div></div>
     </div>`).join('');
 }
-
-/* toast */
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+async function boot() {
+  await restoreAuth();
+  favState = await BiteServices.favourites.getFavourites();
+  checkedInSet = new Set(await BiteServices.checkins.getMyCheckins());
+  checkedIn = checkedInSet;
+  userLocation = await BiteServices.location.getLocation();
+  applyAuthUI();
+  buildDeals();
+  await renderFavourites();
+  initMap();
+}
+boot();
 </script>
 </body>
 </html>

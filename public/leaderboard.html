@@ -114,8 +114,9 @@
 
 <script>
 /* ── Auth + theme (shared by both views) ─────── */
-const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
-if (!currentUser) window.location.href = '/';
+// Read from the unified auth key used by index.html
+const authState = JSON.parse(localStorage.getItem('biteNYC.auth') || 'null');
+const currentUser = authState && authState.isAuthed ? authState.user : null;if (!currentUser) window.location.href = '/';
 
 const THEMES = {
   columbia: { primary: '#1A6BB5', tint: 'rgba(26,107,181,0.08)', mid: 'rgba(26,107,181,0.18)' },

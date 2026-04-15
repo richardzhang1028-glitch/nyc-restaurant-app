@@ -2,8 +2,9 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 
-// ── Favourite Schema ────────────────────────────────
+// ── Favourite Schema (now user-scoped) ──────────────
 const favouriteSchema = new mongoose.Schema({
+    user_id: { type: Number, required: true, index: true },     // owns the favourite
     restaurant_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Restaurant',
@@ -18,18 +19,21 @@ const favouriteSchema = new mongoose.Schema({
     created_at: { type: Date, default: Date.now }
 });
 
+// A user can only favourite a given restaurant once
+favouriteSchema.index({ user_id: 1, restaurant_id: 1 }, { unique: true });
+
 const Favourite = mongoose.model('Favourite', favouriteSchema);
 
-// ── GET /api/favourites ─────────────────────────────
-// 获取所有收藏
+// ── GET /api/favourites?user_id=&school= ────────────
+// List a user's favourites (or all if user_id omitted)
 router.get('/', async (req, res) => {
     try {
-        const { school } = req.query;
-        const filter = school ? { school } : {};
-        const favourites = await Favourite.find(filter)
-            .sort({ created_at: -1 });
+        const { user_id, school } = req.query;
+        const filter = {};
+        if (user_id) filter.user_id = parseInt(user_id);
+        if (school) filter.school = school;
+        const favourites = await Favourite.find(filter).sort({ created_at: -1 });
         res.json(favourites);
-
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to fetch favourites' });
@@ -37,10 +41,11 @@ router.get('/', async (req, res) => {
 });
 
 // ── POST /api/favourites ────────────────────────────
-// 添加收藏
+// Body: { user_id, restaurant_id, ...metadata }
 router.post('/', async (req, res) => {
     try {
         const {
+            user_id,
             restaurant_id,
             restaurant_name,
             restaurant_photo,
@@ -50,22 +55,17 @@ router.post('/', async (req, res) => {
             school
         } = req.body;
 
-        // 验证必填字段
-        if (!restaurant_id) {
-            return res.status(400).json({
-                error: 'restaurant_id is required'
-            });
+        if (!user_id || !restaurant_id) {
+            return res.status(400).json({ error: 'user_id and restaurant_id are required' });
         }
 
-        // 检查是否已经收藏
-        const existing = await Favourite.findOne({ restaurant_id });
+        const existing = await Favourite.findOne({ user_id, restaurant_id });
         if (existing) {
-            return res.status(400).json({
-                error: 'Already in favourites'
-            });
+            return res.status(400).json({ error: 'Already in favourites' });
         }
 
-        const favourite = new Favourite({
+        const favourite = await Favourite.create({
+            user_id,
             restaurant_id,
             restaurant_name,
             restaurant_photo,
@@ -74,45 +74,40 @@ router.post('/', async (req, res) => {
             restaurant_price,
             school
         });
-
-        await favourite.save();
         res.status(201).json(favourite);
-
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to add favourite' });
     }
 });
 
-// ── DELETE /api/favourites/:id ──────────────────────
-// 取消收藏
-router.delete('/:restaurant_id', async (req, res) => {
+// ── DELETE /api/favourites/:user_id/:restaurant_id ──
+// Remove a specific user's favourite
+router.delete('/:user_id/:restaurant_id', async (req, res) => {
     try {
         const favourite = await Favourite.findOneAndDelete({
+            user_id: parseInt(req.params.user_id),
             restaurant_id: req.params.restaurant_id
         });
-
         if (!favourite) {
             return res.status(404).json({ error: 'Favourite not found' });
         }
-
         res.json({ message: 'Removed from favourites' });
-
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to remove favourite' });
     }
 });
 
-// ── GET /api/favourites/check/:restaurant_id ────────
-// 检查某餐厅是否已收藏
-router.get('/check/:restaurant_id', async (req, res) => {
+// ── GET /api/favourites/check/:user_id/:restaurant_id ──
+// Check whether a user has favourited a restaurant
+router.get('/check/:user_id/:restaurant_id', async (req, res) => {
     try {
         const favourite = await Favourite.findOne({
+            user_id: parseInt(req.params.user_id),
             restaurant_id: req.params.restaurant_id
         });
         res.json({ isFavourite: !!favourite });
-
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to check favourite' });
@@ -120,4 +115,3 @@ router.get('/check/:restaurant_id', async (req, res) => {
 });
 
 module.exports = router;
-module.exports.Favourite = Favourite;
