@@ -1,3 +1,47 @@
+# 🍽️ BITE NYC
+
+A restaurant discovery platform for NYC students — focused on Columbia and NYU. Course term project.
+
+> **Tech stack:** HTML / CSS / JavaScript · Node.js + Express · MongoDB (Mongoose) · Leaflet
+
+---
+
+## 🚀 Quick Start
+
+### 1. Prerequisites
+
+- **Node.js** (v18+)
+- **MongoDB** (running locally)
+  - Mac install:
+    ```bash
+    brew tap mongodb/brew
+    brew install mongodb-community@7.0
+    brew services start mongodb-community@7.0
+    ```
+- **Git**
+
+### 2. Clone the repo
+
+```bash
+git clone https://github.com/richardzhang1028-glitch/nyc-restaurant-app.git
+cd nyc-restaurant-app
+```
+
+### 3. Install dependencies
+
+```bash
+npm install
+```
+
+### 4. Set up environment variables
+
+Create a `.env` file in the project root with:
+
+```
+MONGODB_URI=mongodb://localhost:27017/bitenyc
+PORT=3000
+```
+
 ### 5. Seed the database
 
 ```bash
@@ -26,6 +70,8 @@ Open **http://localhost:3000** in your browser.
 ---
 
 ## 📁 Project structure
+
+```
 nyc-restaurant-app/
 ├── data/                          # Data files + seed scripts
 │   ├── restaurants.json           # 1067 restaurants (Person 3)
@@ -50,6 +96,7 @@ nyc-restaurant-app/
 │       └── leaderboard.js
 ├── server.js                      # Express entry point
 └── package.json
+```
 
 ---
 
@@ -97,11 +144,14 @@ All endpoints are prefixed with `/api` and return JSON.
 ## ✨ Core features
 
 - Login / auto-register (school detected from email domain)
-- Restaurant search + filtering
+- Restaurant search + filtering (by type and price)
 - Leaflet map with list-map sync
-- Restaurant detail panel + check-in
+- Restaurant detail panel with hero images, reviews, and check-in
+- Star rating system for user reviews
+- User-scoped favourites with multiple lists
 - Social page: Leaderboard (students + restaurants) + Friends (add / remove / search)
 - School theming (Columbia blue / NYU purple)
+- Geolocation for distance calculation
 
 ---
 
@@ -120,6 +170,11 @@ All endpoints are prefixed with `/api` and return JSON.
 ## 🧪 Reset database to fresh state
 
 ```bash
-node data/seed.js
-node data/seed_users_checkins.js
+node data/seed.js                    # restaurants + deals
+node data/seed_users_checkins.js     # users + check-ins
+```
+
+To also clear favourites and reviews:
+```bash
+mongosh bitenyc --eval "db.favourites.deleteMany({}); db.reviews.deleteMany({})"
 ```
