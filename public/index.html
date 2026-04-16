@@ -430,17 +430,38 @@ body.view-login .home-container {
 .toggle-card .sidebar-toggle { margin:0; }
 .ranking-group .filter-label { color:var(--ink-2); }
 .filter-groups {
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:18px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:nowrap;
+}
+.filter-groups .filter-group {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top:0;
+  margin-bottom:0;
+  line-height:32px;
+}
+.filter-groups .filter-label {
+  margin:0;
+  white-space:nowrap;
 }
 .filter-groups .mood-row,
 .filter-groups .filter-row {
   display:flex;
   gap:6px;
   flex-wrap:wrap;
+  padding:0;
+  margin:0;
+  
 }
-
+.filter-groups .mood-chip,
+.filter-groups .filter-chip {
+  height:32px;
+  display:flex;
+  align-items:center;
+}
 .rest-section { padding:24px 26px 26px; }
 .rest-section .section-title {
   font-family:var(--serif);
@@ -767,17 +788,18 @@ body.view-detail .detail-nav-btn.next { transform:translateY(-50%) translateX(0)
       </div>
       <div class="map-filter-grid">
         <div class="map-filter-group">
-          <div class="filter-label">Primary Filter</div>
+          <div class="filter-label">Type</div>
           <div class="mood-row">
-            <button class="mood-chip" data-mood="quick" onclick="setMood(this,'quick')">⚡ Quick</button>
-            <button class="mood-chip" data-mood="date" onclick="setMood(this,'date')">🕯 Date</button>
+            <button class="mood-chip active" data-mood="all" onclick="setMood(this,'all')">All</button>
+            <button class="mood-chip" data-mood="quick" onclick="setMood(this,'quick')">🍕 Quick Bite</button>
+            <button class="mood-chip" data-mood="date" onclick="setMood(this,'date')">🕯 Date Night</button>
             <button class="mood-chip" data-mood="latenight" onclick="setMood(this,'latenight')">🌙 Late Night</button>
             <button class="mood-chip" data-mood="healthy" onclick="setMood(this,'healthy')">🥗 Healthy</button>
-            <button class="mood-chip" data-mood="instagrammable" onclick="setMood(this,'instagrammable')">📸 Aesthetic</button>
+            <button class="mood-chip" data-mood="study" onclick="setMood(this,'study')">☕ Study Spot</button>
           </div>
         </div>
         <div class="map-filter-group">
-          <div class="filter-label">Price Filter</div>
+          <div class="filter-label">Price</div>
           <div class="filter-row" id="mapFilterPills">
             <button class="filter-chip active" data-price="all" onclick="setFilter(this,'all')">All</button>
             <button class="filter-chip" data-price="$" onclick="setFilter(this,'$')">$</button>
@@ -804,29 +826,20 @@ body.view-detail .detail-nav-btn.next { transform:translateY(-50%) translateX(0)
       <!-- Filters row: filter card + view toggle card -->
       <div class="home-filters-row">
         <section class="home-section toggle-card">
-          <div class="ranking-group">
-            <div class="filter-label">Ranking</div>
-            <div class="sidebar-toggle">
-              <button class="stoggle-btn active" id="rankAll" data-rank="all" onclick="setRankingMode('all', this)">All</button>
-              <button class="stoggle-btn" id="rankHeat" data-rank="heat" onclick="setRankingMode('heat', this)">Heat</button>
-              <button class="stoggle-btn" id="rankMonth" data-rank="month" onclick="setRankingMode('month', this)">Month</button>
-              <button class="stoggle-btn" id="rankWeek" data-rank="week" onclick="setRankingMode('week', this)">Week</button>
-              <button class="stoggle-btn" id="rankCheckin" data-rank="checkin" onclick="setRankingMode('checkin', this)">Check-in</button>
-            </div>
-          </div>
           <div class="filter-groups">
             <div class="filter-group">
-              <div class="filter-label">Primary Filter</div>
+              <div class="filter-label">Type</div>
               <div class="mood-row">
-                <button class="mood-chip" data-mood="quick" onclick="setMood(this,'quick')">⚡ Quick</button>
-                <button class="mood-chip" data-mood="date" onclick="setMood(this,'date')">🕯 Date</button>
+                <button class="mood-chip active" data-mood="all" onclick="setMood(this,'all')">All</button>
+                <button class="mood-chip" data-mood="quick" onclick="setMood(this,'quick')">🍕 Quick Bite</button>
+                <button class="mood-chip" data-mood="date" onclick="setMood(this,'date')">🕯 Date Night</button>
                 <button class="mood-chip" data-mood="latenight" onclick="setMood(this,'latenight')">🌙 Late Night</button>
                 <button class="mood-chip" data-mood="healthy" onclick="setMood(this,'healthy')">🥗 Healthy</button>
-                <button class="mood-chip" data-mood="instagrammable" onclick="setMood(this,'instagrammable')">📸 Aesthetic</button>
+                <button class="mood-chip" data-mood="study" onclick="setMood(this,'study')">☕ Study Spot</button>
               </div>
             </div>
             <div class="filter-group">
-              <div class="filter-label">Price Filter</div>
+              <div class="filter-label">Price</div>
               <div class="filter-row" id="filterRow">
                 <button class="filter-chip active" data-price="all" onclick="setFilter(this,'all')">All</button>
                 <button class="filter-chip" data-price="$" onclick="setFilter(this,'$')">$</button>
@@ -967,7 +980,7 @@ const SCHOOL_FOCUS = {
   nyu:{lat:40.7295, lng:-73.9965, zoom:15}
 };
 const GUEST_THEME = { primary:'#555555', tint:'rgba(85,85,85,0.08)', mid:'rgba(85,85,85,0.18)' };
-const MOOD_TAG = { quick:'⚡ Quick', date:'🕯 Date', latenight:'🌙 Late Night', healthy:'🥗 Healthy', instagrammable:'📸 Aesthetic' };
+const MOOD_TAG = { quick:'🍕 Quick Bite', date:'🕯 Date Night', latenight:'🌙 Late Night', healthy:'🥗 Healthy', study:'☕ Study Spot' };
 const GOOD_FOR = { cheap:'Budget-friendly', latenight:'Late Night', study:'Study Spots', healthy:'Healthy', toprated:'Top Rated' };
 const ALL_RESTAURANTS = {
   columbia:[
@@ -1069,8 +1082,21 @@ const BiteServices = (() => {
         if (doc.rating >= 4.5) tags.push('toprated');
         if (/cafe|coffee/i.test(cuisine)) tags.push('study');
         const moods = [];
-        if (price === '$') moods.push('quick');
-        if (price === '$$$' || price === '$$$$') moods.push('date');
+        const nameLower = (doc.name || '').toLowerCase();
+        const cuisineLower = cuisine.toLowerCase();
+        const combined = cuisineLower + ' ' + nameLower;
+        // Quick Bite: cheap, fast, grab-and-go
+        if (price === '$' || /pizza|burger|taco|falafel|bagel|deli|fast|noodle|dumpling|wing|sandwich|wrap|hot dog/i.test(combined)) moods.push('quick');
+        // Date Night: upscale, romantic
+        if (price === '$$$' || price === '$$$$' || /italian|french|japanese|sushi|steakhouse|seafood|wine|bistro|tapas/i.test(combined)) moods.push('date');
+        // Late Night: bars, pizza, diners, late-friendly
+        if (/pizza|bar|pub|diner|grill|burger|wing|taco|falafel|karaoke|lounge/i.test(combined)) moods.push('latenight');
+        // Healthy: salads, juice, vegan, poke
+        if (/salad|juice|vegan|vegetarian|organic|poke|acai|smoothie|health|green|bowl|grain/i.test(combined)) moods.push('healthy');
+        // Study Spot: cafes, coffee shops, bakeries, quiet places
+        if (/cafe|café|coffee|bakery|tea|brunch|pastry|library|bookstore|starbucks|deli/i.test(combined)) moods.push('study');
+        // Fallback
+        if (!moods.length && price === '$') moods.push('quick');
         return {
           id: idx + 1,
           _id: doc._id,                              // MongoDB ObjectId, needed for favourites/reviews                              // numeric id for frontend code
@@ -1087,7 +1113,7 @@ const BiteServices = (() => {
           neighborhood: doc.school === 'columbia' ? 'Morningside Heights' : 'Greenwich Village',
           address: doc.address || '',
           hero: doc.photo_url || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80',
-          desc: `${cuisine} restaurant${doc.review_count ? ` · ${doc.review_count} reviews` : ''}`,
+          desc: `${cuisine} restaurant in ${doc.school === 'columbia' ? 'Morningside Heights' : 'Greenwich Village'}.`,
           reviews: [],
           school: doc.school
         };
@@ -1668,7 +1694,7 @@ async function goHome() {
 async function goBack() { await closeDetail(); }
 
 async function setMood(el, key) {
-  if (activeMood === key) {
+  if (key === 'all' || activeMood === key) {
     activeMood = null;
   } else {
     activeMood = key;
@@ -1700,7 +1726,10 @@ document.getElementById('mapSearchInput').addEventListener('input', async () => 
 });
 function syncFilterUI() {
   document.querySelectorAll('.stoggle-btn[data-rank]').forEach(btn => btn.classList.toggle('active', btn.dataset.rank === rankingMode));
-  document.querySelectorAll('.mood-chip[data-mood]').forEach(btn => btn.classList.toggle('active', !!activeMood && btn.dataset.mood === activeMood));
+  document.querySelectorAll('.mood-chip[data-mood]').forEach(btn => {
+    if (btn.dataset.mood === 'all') btn.classList.toggle('active', !activeMood);
+    else btn.classList.toggle('active', btn.dataset.mood === activeMood);
+  });
   document.querySelectorAll('.filter-chip[data-price]').forEach(btn => btn.classList.toggle('active', btn.dataset.price === activeFilter));
 }
 async function refreshDiscoveryViews() {
