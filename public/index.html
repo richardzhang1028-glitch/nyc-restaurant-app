@@ -158,8 +158,7 @@ body.view-detail .map-controls { opacity:1; transform:translateY(0); pointer-eve
 .map-ctrl-btn:hover { background:var(--bg); }
 .detail-back { position:absolute; top:16px; left:16px; z-index:170; height:38px; padding:0 16px; border-radius:8px; border:1px solid rgba(255,255,255,.8); background:rgba(255,255,255,.94); color:var(--ink); font-size:13px; font-weight:600; box-shadow:0 4px 18px rgba(0,0,0,.10); opacity:0; transform:translateY(-8px); pointer-events:none; transition:opacity .35s var(--ease) .2s, transform .35s var(--ease) .2s; }
 body.view-detail .detail-back { opacity:1; transform:translateY(0); pointer-events:all; }
-.deal-strip { position:fixed; bottom:22px; left:50%; width:min(1200px, calc(100vw - 48px)); transform:translateX(-50%); z-index:12; display:flex; gap:10px; overflow-x:auto; padding-bottom:2px; pointer-events:none; transition:opacity .35s var(--ease), transform .35s var(--ease); }
-body.view-detail .deal-strip, body.view-login .deal-strip { opacity:0; transform:translateX(-50%) translateY(20px); pointer-events:none; }
+.deal-strip { display:flex; gap:10px; overflow-x:auto; padding-bottom:4px; }
 .deal-strip::-webkit-scrollbar { display:none; }
 .deal-card { flex-shrink:0; background:rgba(255,255,255,.96); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,.8); border-radius:14px; padding:12px 16px; display:flex; align-items:center; gap:10px; box-shadow:0 4px 20px rgba(0,0,0,.10); pointer-events:all; min-width:210px; max-width:260px; transition:transform .18s, box-shadow .18s; }
 .deal-card:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(0,0,0,.13); }
@@ -173,8 +172,8 @@ body.view-detail .deal-strip, body.view-login .deal-strip { opacity:0; transform
 .deal-time { font-size:11px; color:var(--ink-3); margin-top:1px; }
 
 .floating-panel { position:fixed; top:80px; left:50%; z-index:10; width:min(1200px, calc(100vw - 48px)); max-height:calc(100vh - 150px); display:flex; flex-direction:column; background:rgba(255,255,255,.92); backdrop-filter:blur(20px); border:1px solid var(--border); border-radius:24px; box-shadow:0 16px 48px rgba(0,0,0,.12); overflow:hidden; opacity:0; transform:translateX(-50%) scale(.98) translateY(12px); pointer-events:none; transition:opacity .5s var(--ease), transform .5s var(--ease); }
-body.view-home .home-panel, body.view-favourites .favourites-panel { opacity:1; transform:translateX(-50%) scale(1) translateY(0); pointer-events:all; }
-body.view-detail .home-panel, body.view-detail .favourites-panel { opacity:0; transform:translateX(-50%) scale(.95) translateY(20px); pointer-events:none; }
+body.view-home .home-panel, body.view-favourites .favourites-panel, body.view-social .social-panel { opacity:1; transform:translateX(-50%) scale(1) translateY(0); pointer-events:all; }
+body.view-detail .home-panel, body.view-detail .favourites-panel, body.view-detail .social-panel { opacity:0; transform:translateX(-50%) scale(.95) translateY(20px); pointer-events:none; }
 .panel-head { padding:22px 22px 12px; }
 .panel-eyebrow { font-size:11px; font-weight:700; letter-spacing:.13em; text-transform:uppercase; color:var(--p); margin-bottom:8px; }
 .panel-title { font-family:var(--serif); font-size:30px; line-height:1.05; letter-spacing:-.01em; color:var(--ink); }
@@ -261,6 +260,50 @@ body.view-detail .detail-sheet { transform:translate(-50%, 0); opacity:1; pointe
 .checkin-btn.checked { background:#059669; }
 
 .favourites-panel { width:min(1200px, calc(100vw - 48px)); }
+.social-panel { width:min(1200px, calc(100vw - 48px)); max-height:calc(100vh - 100px); }
+.social-panel .panel-head { padding:22px 26px 0; }
+.social-header-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+.social-header-row .panel-title { font-size:28px; }
+.social-pagebar { display:flex; gap:0; background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:3px; margin:12px 26px 0; }
+.social-pagebar-tab { flex:1; padding:7px 16px; border-radius:7px; border:none; background:transparent; font-family:var(--sans); font-size:13px; font-weight:500; color:var(--ink-3); cursor:pointer; transition:all .2s; display:flex; align-items:center; justify-content:center; gap:6px; }
+.social-pagebar-tab.active { background:var(--surface); color:var(--ink); box-shadow:0 1px 4px rgba(0,0,0,.08); }
+.social-controls { z-index:5; background:rgba(255,255,255,.95); backdrop-filter:blur(12px); padding:12px 26px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; border-bottom:1px solid var(--border); flex-shrink:0; }
+.social-tabs { display:flex; gap:0; background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:3px; }
+.social-tab { padding:6px 14px; border-radius:7px; border:none; background:transparent; font-family:var(--sans); font-size:12px; font-weight:500; color:var(--ink-3); cursor:pointer; transition:all .2s; }
+.social-tab.active { background:var(--surface); color:var(--ink); box-shadow:0 1px 4px rgba(0,0,0,.08); }
+.social-toggle { display:flex; gap:6px; }
+.social-toggle-btn { padding:5px 12px; border-radius:99px; border:1.5px solid var(--border); background:transparent; font-size:11px; font-weight:500; color:var(--ink-2); cursor:pointer; transition:all .2s; font-family:var(--sans); }
+.social-toggle-btn.active { border-color:var(--p); color:var(--p); background:var(--p-tint); }
+.social-content { flex:1; overflow-y:auto; padding:12px 26px 26px; }
+.social-list { display:flex; flex-direction:column; gap:6px; }
+.social-row { display:flex; align-items:center; gap:14px; padding:14px 16px; background:var(--surface); border:1px solid var(--border); border-radius:14px; transition:transform .15s, box-shadow .2s; position:relative; overflow:hidden; }
+.social-row:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,.08); }
+.social-rank { font-family:var(--serif); font-size:20px; color:var(--ink-3); width:28px; text-align:center; flex-shrink:0; z-index:1; }
+.social-avatar { min-width:38px; width:38px; height:38px; border-radius:50%; background:var(--p-tint); color:var(--p); display:flex; align-items:center; justify-content:center; font-weight:600; font-size:14px; flex-shrink:0; z-index:1; overflow:hidden; }
+.social-medal { font-size:15px; margin-left:4px; flex-shrink:0; }
+.social-name { flex:1; font-size:14px; font-weight:500; color:var(--ink); z-index:1; }
+.social-you { font-size:10px; font-weight:600; color:var(--p); background:var(--p-tint); padding:2px 6px; border-radius:4px; margin-left:6px; text-transform:uppercase; letter-spacing:.04em; }
+.social-school { font-size:10px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.08em; margin-left:6px; }
+.social-score { text-align:right; z-index:1; flex-shrink:0; }
+.social-count { font-family:var(--serif); font-size:20px; color:var(--p); display:block; line-height:1; }
+.social-count-label { font-size:10px; color:var(--ink-3); }
+.social-bar { position:absolute; left:0; top:0; bottom:0; background:var(--p); opacity:1; border-radius:14px 0 0 14px; transition:width .4s var(--ease); z-index:0; pointer-events:none; }
+.social-empty { text-align:center; padding:48px 20px; color:var(--ink-3); font-size:14px; }
+.social-loading { text-align:center; padding:48px 20px; color:var(--ink-3); font-size:13px; }
+.fr-action { padding:5px 12px; border-radius:99px; border:1.5px solid var(--border); background:transparent; font-size:11px; font-weight:500; color:var(--ink-2); cursor:pointer; transition:all .2s; font-family:var(--sans); z-index:1; }
+.fr-action:hover { border-color:var(--p); color:var(--p); }
+.fr-action.danger:hover { border-color:#c44; color:#c44; }
+.fr-add-section { background:var(--bg); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:12px; }
+.fr-add-title { font-size:12px; font-weight:600; color:var(--ink-2); margin-bottom:10px; text-transform:uppercase; letter-spacing:.06em; }
+.fr-add-row { display:flex; gap:8px; }
+.fr-search { flex:1; height:38px; padding:0 14px; border-radius:10px; border:1.5px solid var(--border); font-family:var(--sans); font-size:13px; outline:none; background:#fff; }
+.fr-search:focus { border-color:var(--p); }
+.fr-suggestions { margin-top:10px; display:flex; flex-direction:column; gap:4px; max-height:200px; overflow-y:auto; }
+.fr-suggest-row { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:10px; cursor:pointer; transition:background .15s; }
+.fr-suggest-row:hover { background:var(--p-tint); }
+.fr-suggest-name { flex:1; font-size:13px; }
+.fr-suggest-school { font-size:10px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.08em; }
+.fr-add-btn { padding:5px 10px; border-radius:8px; border:none; background:var(--p); color:#fff; font-size:11px; font-weight:600; cursor:pointer; }
 .fav-tabs { display:flex; gap:6px; flex-wrap:wrap; padding:0 22px 12px; }
 .favourites-list { flex:1; overflow-y:auto; padding:16px 24px 24px; display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px; align-content:start; }
 .fav-item { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:18px; border-radius:16px; border:1px solid var(--border); background:var(--surface); cursor:pointer; transition:transform .2s var(--ease), box-shadow .2s var(--ease); }
@@ -384,6 +427,7 @@ body.view-detail .detail-sheet { transform:translate(-50%, 0); opacity:1; pointe
 
 body.view-detail .home-container,
 body.view-favourites .home-container,
+body.view-social .home-container,
 body.view-login .home-container {
   opacity:0;
   pointer-events:none;
@@ -529,17 +573,24 @@ body.view-login .home-container {
 body.view-map #map { filter:none; opacity:1; }
 body.view-map .home-container,
 body.view-map .favourites-panel,
+body.view-map .social-panel,
 body.view-map .deal-strip {
   opacity:0;
   pointer-events:none;
 }
 body.view-map .home-container *,
 body.view-map .favourites-panel *,
+body.view-map .social-panel *,
 body.view-map .deal-strip *,
 body.view-detail .home-container *,
 body.view-detail .favourites-panel *,
+body.view-detail .social-panel *,
 body.view-home .favourites-panel *,
-body.view-favourites .home-container * {
+body.view-home .social-panel *,
+body.view-favourites .home-container *,
+body.view-favourites .social-panel *,
+body.view-social .home-container *,
+body.view-social .favourites-panel * {
   pointer-events:none !important;
 }
 body.view-map .map-controls {
@@ -554,7 +605,7 @@ body.view-map .map-controls {
   left:50%;
   transform:translateX(-50%) translateY(-12px);
   z-index:160;
-  width:min(760px, calc(100vw - 32px));
+  width:min(1200px, calc(100vw - 48px));
   background:rgba(255,255,255,0.96);
   backdrop-filter:blur(20px);
   -webkit-backdrop-filter:blur(20px);
@@ -573,7 +624,7 @@ body.view-map .map-search-card {
 }
 .map-search-card .panel-search { margin:0; }
 .map-search-card .panel-search input { height:42px; background:#fff; }
-.map-filter-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px 14px; margin-top:12px; }
+.map-filter-grid { display:flex; align-items:center; gap:12px; flex-wrap:nowrap; gap:10px 14px; margin-top:12px; }
 .map-filter-group { min-width:0; }
 .map-filter-group.full { grid-column:1 / -1; }
 .map-search-card .filter-label { margin-bottom:6px; font-size:10px; }
@@ -749,7 +800,7 @@ body.view-detail .detail-nav-btn.next { transform:translateY(-50%) translateX(0)
       <button class="nav-tab active" id="tabDiscover" onclick="setView('home')">Discover</button>
       <button class="nav-tab" id="tabMap" onclick="setView('map')">Map</button>
       <button class="nav-tab" id="tabFavourites" onclick="setView('favourites')">Favourites</button>
-      <button class="nav-tab" id="tabSocial" onclick="window.location.href='/leaderboard.html'">Social</button>
+      <button class="nav-tab" id="tabSocial" onclick="setView('social')">Social</button>
     </div>
     <div class="nav-spacer"></div>
     <div class="nav-right">
@@ -777,7 +828,6 @@ body.view-detail .detail-nav-btn.next { transform:translateY(-50%) translateX(0)
         <div class="map-ctrl-btn" onclick="mapInstance && mapInstance.zoomIn()">+</div>
         <div class="map-ctrl-btn" onclick="mapInstance && mapInstance.zoomOut()">−</div>
       </div>
-      <div class="deal-strip" id="dealStrip"></div>
     </div>
 
     <!-- Improved back button (Detail mode) -->
@@ -806,6 +856,7 @@ body.view-detail .detail-nav-btn.next { transform:translateY(-50%) translateX(0)
             <button class="mood-chip" data-mood="latenight" onclick="setMood(this,'latenight')">🌙 Late Night</button>
             <button class="mood-chip" data-mood="healthy" onclick="setMood(this,'healthy')">🥗 Healthy</button>
             <button class="mood-chip" data-mood="study" onclick="setMood(this,'study')">☕ Study Spot</button>
+            <button class="mood-chip" data-mood="nearby" onclick="setMood(this,'nearby')">📍 Nearby</button>
           </div>
         </div>
         <div class="map-filter-group">
@@ -832,7 +883,11 @@ body.view-detail .detail-nav-btn.next { transform:translateY(-50%) translateX(0)
           <input type="text" id="searchInput" placeholder="Search restaurants...">
         </div>
       </section>
-
+<!-- Deals row -->
+      <section class="home-section" id="dealSection" style="padding:18px 22px;">
+        <div class="filter-label" style="margin-bottom:12px;">Today's Deals</div>
+        <div id="dealStrip" style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;"></div>
+      </section>
       <!-- Filters row: filter card + view toggle card -->
       <div class="home-filters-row">
         <section class="home-section toggle-card">
@@ -846,6 +901,7 @@ body.view-detail .detail-nav-btn.next { transform:translateY(-50%) translateX(0)
                 <button class="mood-chip" data-mood="latenight" onclick="setMood(this,'latenight')">🌙 Late Night</button>
                 <button class="mood-chip" data-mood="healthy" onclick="setMood(this,'healthy')">🥗 Healthy</button>
                 <button class="mood-chip" data-mood="study" onclick="setMood(this,'study')">☕ Study Spot</button>
+                <button class="mood-chip" data-mood="nearby" onclick="setMood(this,'nearby')">📍 Nearby</button>
               </div>
             </div>
             <div class="filter-group">
@@ -878,7 +934,47 @@ body.view-detail .detail-nav-btn.next { transform:translateY(-50%) translateX(0)
       <div class="fav-tabs" id="favTabs"></div>
       <div class="favourites-list" id="favouritesList"></div>
     </section>
-
+<section class="floating-panel social-panel" id="socialPanel">
+      <div class="panel-head">
+        <div class="panel-eyebrow" id="socialEyebrow">Social</div>
+        <div class="social-header-row">
+          <h2 class="panel-title" id="socialTitle">Leaderboard</h2>
+        </div>
+        <p class="panel-sub" id="socialSub">Most active eaters this season.</p>
+      </div>
+      <div class="social-pagebar">
+        <button class="social-pagebar-tab active" id="socialTabLb" onclick="setSocialPage('leaderboard')">🏆 Leaderboard</button>
+        <button class="social-pagebar-tab" id="socialTabFr" onclick="setSocialPage('friends')">👥 Friends</button>
+      </div>
+      <!-- Leaderboard controls — outside scroll area so they stay sticky -->
+      <div class="social-controls" id="socialControls">
+        <div class="social-tabs">
+          <button class="social-tab active" id="socialScopeMine" onclick="setSocialScope('mine')">My School</button>
+          <button class="social-tab" id="socialScopeAll" onclick="setSocialScope('all')">All Schools</button>
+        </div>
+        <div class="social-toggle">
+          <button class="social-toggle-btn active" id="socialTypeUsers" onclick="setSocialType('users')">👥 Students</button>
+          <button class="social-toggle-btn" id="socialTypeRests" onclick="setSocialType('restaurants')">🍽️ Restaurants</button>
+        </div>
+      </div>
+      <div class="social-content">
+        <!-- Leaderboard view -->
+        <div id="socialViewLb">
+          <div class="social-list" id="socialLbList"><div class="social-loading">Loading…</div></div>
+        </div>
+        <!-- Friends view -->
+        <div id="socialViewFr" style="display:none">
+          <div class="fr-add-section">
+            <div class="fr-add-title">Add a friend</div>
+            <div class="fr-add-row">
+              <input class="fr-search" id="socialFrSearch" type="text" placeholder="Search by name or email…" oninput="renderSocialSuggestions()">
+            </div>
+            <div class="fr-suggestions" id="socialFrSuggestions"></div>
+          </div>
+          <div class="social-list" id="socialFrList"><div class="social-loading">Loading…</div></div>
+        </div>
+      </div>
+    </section>
     <section class="detail-sheet" id="detailSheet">
       <div class="sheet-handle"></div>
       <div class="detail-hero" id="detailHero">
@@ -990,7 +1086,7 @@ const SCHOOL_FOCUS = {
   nyu:{lat:40.7295, lng:-73.9965, zoom:15}
 };
 const GUEST_THEME = { primary:'#555555', tint:'rgba(85,85,85,0.08)', mid:'rgba(85,85,85,0.18)' };
-const MOOD_TAG = { quick:'🍕 Quick Bite', date:'🕯 Date Night', latenight:'🌙 Late Night', healthy:'🥗 Healthy', study:'☕ Study Spot' };
+const MOOD_TAG = { quick:'🍕 Quick Bite', date:'🕯 Date Night', latenight:'🌙 Late Night', healthy:'🥗 Healthy', study:'☕ Study Spot', nearby:'📍 Nearby' };
 const GOOD_FOR = { cheap:'Budget-friendly', latenight:'Late Night', study:'Study Spots', healthy:'Healthy', toprated:'Top Rated' };
 const ALL_RESTAURANTS = {
   columbia:[
@@ -1569,7 +1665,7 @@ async function handleSubmit() {
   await setView('home', { skipMap:true });
   const cfg = SCHOOL_CFG[school];
   if (mapInstance) mapInstance.flyTo(cfg.center, cfg.zoom, { duration:.8 });
-  buildDeals();
+  await buildDeals();
   await buildList();
   await renderFavourites();
   requestLocation();
@@ -1665,11 +1761,12 @@ async function setView(view, opts = {}) {
     showToast('Sign in to save your favourites');
   }
   currentView = view;
-  document.body.classList.remove('view-home', 'view-detail', 'view-favourites', 'view-map', 'view-login');
-  document.body.classList.add(view === 'favourites' ? 'view-favourites' : view === 'detail' ? 'view-detail' : view === 'map' ? 'view-map' : 'view-home');
+  document.body.classList.remove('view-home', 'view-detail', 'view-favourites', 'view-social', 'view-map', 'view-login');
+  document.body.classList.add(view === 'favourites' ? 'view-favourites' : view === 'social' ? 'view-social' : view === 'detail' ? 'view-detail' : view === 'map' ? 'view-map' : 'view-home');
   document.getElementById('tabDiscover').classList.toggle('active', view === 'home' || (view === 'detail' && detailReturnView === 'home'));
   document.getElementById('tabMap').classList.toggle('active', view === 'map' || (view === 'detail' && detailReturnView === 'map'));
   document.getElementById('tabFavourites').classList.toggle('active', view === 'favourites' || (view === 'detail' && detailReturnView === 'favourites'));
+  document.getElementById('tabSocial').classList.toggle('active', view === 'social');
   if (!opts.skipMap && mapInstance && view !== 'detail') {
     const cfg = SCHOOL_CFG[school];
     activeId = null;
@@ -1681,6 +1778,7 @@ async function setView(view, opts = {}) {
     }
   }
   if (view === 'favourites') await renderFavourites();
+  if (view === 'social') await loadSocialLeaderboard();
   if (view === 'map' && opts.skipMap) {
     enableMapInteractions();
     mapInstance.invalidateSize();
@@ -1704,6 +1802,11 @@ async function goHome() {
 async function goBack() { await closeDetail(); }
 
 async function setMood(el, key) {
+  if (key === 'nearby' && !userLocation) {
+    showToast('Enable location to see nearby restaurants');
+    requestLocation();
+    return;
+  }
   if (key === 'all' || activeMood === key) {
     activeMood = null;
   } else {
@@ -1754,18 +1857,30 @@ async function refreshDiscoveryViews() {
 async function getFilteredRests() {
   const rests = await BiteServices.restaurants.getRestaurants({
     school,
-    mood:activeMood,
+    mood: activeMood === 'nearby' ? null : activeMood,
     price:activeFilter,
     query:searchQuery
   });
+  if (activeMood === 'nearby' && userLocation) {
+    return rests
+      .map(r => ({ ...r, _dist: parseFloat(calculateDistance(userLocation.lat, userLocation.lng, r.lat, r.lng)) }))
+      .filter(r => r._dist <= 0.5)
+      .sort((a, b) => a._dist - b._dist);
+  }
   return sortByRanking(rests);
 }
 async function getMapFilteredRests() {
   const rests = await BiteServices.restaurants.getMapRestaurants({
-    mood:activeMood,
+    mood: activeMood === 'nearby' ? null : activeMood,
     price:activeFilter,
     query:searchQuery
   });
+  if (activeMood === 'nearby' && userLocation) {
+    return rests
+      .map(r => ({ ...r, _dist: parseFloat(calculateDistance(userLocation.lat, userLocation.lng, r.lat, r.lng)) }))
+      .filter(r => r._dist <= 0.5)
+      .sort((a, b) => a._dist - b._dist);
+  }
   return sortByRanking(rests);
 }
 function rankingScore(r) {
@@ -1823,7 +1938,7 @@ function getAllRestaurants() {
   const source = window.BITE_RESTAURANTS || ALL_RESTAURANTS;
   return Object.values(source).flat();
 }
-function initMap() {
+async function initMap() {
   const cfg = SCHOOL_CFG[school];
   mapInstance = L.map('map', {
     center:cfg.center,
@@ -1841,7 +1956,7 @@ function initMap() {
   enableMapInteractions();
   setupMapCardInteractions();
   setTimeout(() => mapInstance.invalidateSize(), 100);
-  buildList();
+  await buildList();
   addUserMarkerToMap();
 }
 function enableMapInteractions() {
@@ -1973,11 +2088,12 @@ async function closeDetail() {
   const cfg = SCHOOL_CFG[school];
   document.body.classList.remove('view-detail');
   const returnView = detailReturnView || 'home';
-  document.body.classList.add(returnView === 'map' ? 'view-map' : returnView === 'favourites' ? 'view-favourites' : 'view-home');
+  document.body.classList.add(returnView === 'map' ? 'view-map' : returnView === 'favourites' ? 'view-favourites' : returnView === 'social' ? 'view-social' : 'view-home');
   currentView = returnView;
   document.getElementById('tabDiscover').classList.toggle('active', returnView === 'home');
   document.getElementById('tabMap').classList.toggle('active', returnView === 'map');
   document.getElementById('tabFavourites').classList.toggle('active', returnView === 'favourites');
+  document.getElementById('tabSocial').classList.toggle('active', returnView === 'social');
   if (mapInstance && returnView !== 'map') mapInstance.flyTo(cfg.center, cfg.zoom, { duration:.75 });
   setTimeout(() => {
     (async () => {
@@ -2211,13 +2327,32 @@ async function setFavouriteList(id) {
   activeFavList = id;
   await renderFavourites();
 }
-function buildDeals() {
-  const deals = DEALS[school] || [];
-  document.getElementById('dealStrip').innerHTML = deals.map((d, i) => `
-    <div class="deal-card" style="animation-delay:${i * .08}s">
-      <div class="deal-icon ${d.type}">${d.icon}</div>
-      <div class="deal-body"><div class="deal-label">${d.label}</div><div class="deal-title">${d.title}</div><div class="deal-time">${d.time}</div></div>
-    </div>`).join('');
+async function buildDeals() {
+  const strip = document.getElementById('dealStrip');
+  if (!strip) return;
+  try {
+    const res = await fetch(`/api/deals?school=${school}`);
+    const deals = await res.json();
+    const active = deals.filter(d => d.is_active);
+    if (!active.length) {
+      strip.innerHTML = '<div style="color:var(--ink-3);font-size:13px;">No deals right now.</div>';
+      return;
+    }
+    const icons = { deal:'🏷️', free_food:'🎉', event:'☕', coupon:'🎫' };
+    strip.innerHTML = active.map(d => `
+      <div class="deal-card" style="flex-shrink:0;min-width:220px;max-width:280px;">
+        <div class="deal-icon ${d.type}" style="background:${d.type === 'deal' ? '#fef3c7' : d.type === 'free_food' ? '#ecfdf5' : d.type === 'coupon' ? '#eff6ff' : '#ede9fe'}">${icons[d.type] || '🍽️'}</div>
+        <div class="deal-body">
+          <div class="deal-label">${d.discount || d.type}</div>
+          <div class="deal-title">${d.title}</div>
+          <div class="deal-time">${d.time} · ${d.date}</div>
+          <div style="font-size:11px;color:var(--ink-3);margin-top:2px;">${d.restaurant}</div>
+        </div>
+      </div>`).join('');
+  } catch (err) {
+    console.warn('Deals fetch failed:', err);
+    strip.innerHTML = '';
+  }
 }
 function showToast(msg) {
   const t = document.getElementById('toast');
@@ -2226,6 +2361,171 @@ function showToast(msg) {
   clearTimeout(showToast.timer);
   showToast.timer = setTimeout(() => t.classList.remove('show'), 2600);
 }
+/* ════════════════════════════════════════════════
+   SOCIAL (Leaderboard + Friends) — inline panel
+════════════════════════════════════════════════ */
+let socialPage = 'leaderboard';
+let socialScope = 'mine';
+let socialType = 'users';
+let socialAllUsers = [];
+let socialMyFriends = [];
+
+function setSocialPage(p) {
+  socialPage = p;
+  document.getElementById('socialTabLb').classList.toggle('active', p === 'leaderboard');
+  document.getElementById('socialTabFr').classList.toggle('active', p === 'friends');
+  document.getElementById('socialViewLb').style.display = p === 'leaderboard' ? '' : 'none';
+  document.getElementById('socialViewFr').style.display = p === 'friends' ? '' : 'none';
+  document.getElementById('socialControls').style.display = p === 'leaderboard' ? '' : 'none';
+  document.getElementById('socialTitle').textContent = p === 'leaderboard' ? 'Leaderboard' : 'Friends';
+  document.getElementById('socialSub').textContent = p === 'leaderboard' ? 'Most active eaters this season.' : 'People you\'re connected with.';
+  if (p === 'friends') loadSocialFriends();
+}
+function setSocialScope(s) {
+  socialScope = s;
+  document.getElementById('socialScopeMine').classList.toggle('active', s === 'mine');
+  document.getElementById('socialScopeAll').classList.toggle('active', s === 'all');
+  loadSocialLeaderboard();
+}
+function setSocialType(t) {
+  socialType = t;
+  document.getElementById('socialTypeUsers').classList.toggle('active', t === 'users');
+  document.getElementById('socialTypeRests').classList.toggle('active', t === 'restaurants');
+  loadSocialLeaderboard();
+}
+async function loadSocialLeaderboard() {
+  const list = document.getElementById('socialLbList');
+  list.innerHTML = '<div class="social-loading">Loading…</div>';
+  const eyebrow = document.getElementById('socialEyebrow');
+  eyebrow.textContent = school === 'nyu' ? 'NYU Social' : 'Columbia Social';
+  const url = socialType === 'users'
+    ? `/api/leaderboard${socialScope === 'mine' ? `?school=${school}` : ''}`
+    : `/api/leaderboard/restaurants${socialScope === 'mine' ? `?school=${school}` : ''}`;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.length) { list.innerHTML = '<div class="social-empty">No data yet — go check in somewhere!</div>'; return; }
+    const auth = JSON.parse(localStorage.getItem('biteNYC.auth') || '{}');
+    const myId = auth.user?.id;
+    const maxCount = data[0].checkin_count || 1;
+    const medalEmojis = ['🥇', '🥈', '🥉'];
+    const schoolColors = {
+      columbia: { bar:'rgba(26,107,181,0.12)', avatar:'rgba(26,107,181,0.12)', text:'#1A6BB5' },
+      nyu: { bar:'rgba(139,29,181,0.12)', avatar:'rgba(139,29,181,0.12)', text:'#8B1DB5' }
+    };
+    const defaultColors = schoolColors.columbia;
+    list.innerHTML = data.map((row, i) => {
+      const barWidth = Math.round((row.checkin_count / maxCount) * 100);
+      const medalHtml = i < 3 ? `<span class="social-medal">${medalEmojis[i]}</span>` : '';
+      const sc = row.school || 'columbia';
+      const colors = schoolColors[sc] || defaultColors;
+      if (socialType === 'users') {
+        const letter = (row.name || '?').charAt(0).toUpperCase();
+        const isMe = row.user_id === myId;
+        return `<div class="social-row">
+          <div class="social-bar" style="width:${barWidth}%;background:${colors.bar}"></div>
+          <div class="social-rank">${i + 1}</div>
+          <div class="social-avatar" style="background:${colors.avatar};color:${colors.text}">${letter}</div>
+          <div class="social-name">${row.name || 'Unknown'}${medalHtml}${isMe ? '<span class="social-you">You</span>' : ''}<span class="social-school">${sc}</span></div>
+          <div class="social-score"><span class="social-count" style="color:${colors.text}">${row.checkin_count}</span><span class="social-count-label">check-ins</span></div>
+        </div>`;
+      } else {
+        // Find restaurant image from cached data
+        const all = window.BITE_RESTAURANTS ? Object.values(window.BITE_RESTAURANTS).flat() : [];
+        const match = all.find(r => r.name === row.restaurant_name);
+        const hasImg = match && match.hero && !match.hero.includes('unsplash.com/photo-1555396273');
+        return `<div class="social-row">
+          <div class="social-bar" style="width:${barWidth}%;background:${colors.bar}"></div>
+          <div class="social-rank">${i + 1}</div>
+          <div class="social-avatar" style="${hasImg ? `background-image:url('${match.hero}');background-size:cover;background-position:center;` : `background:${colors.avatar};color:${colors.text}`}">${hasImg ? '' : '🍽️'}</div>
+          <div class="social-name">${row.restaurant_name || 'Unknown'}${medalHtml}<span class="social-school">${sc}</span></div>
+          <div class="social-score"><span class="social-count" style="color:${colors.text}">${row.checkin_count}</span><span class="social-count-label">visits</span></div>
+        </div>`;
+      }
+    }).join('');
+  } catch (err) {
+    console.error(err);
+    list.innerHTML = '<div class="social-empty">Couldn\'t load leaderboard.</div>';
+  }
+}
+async function loadSocialFriends() {
+  const list = document.getElementById('socialFrList');
+  list.innerHTML = '<div class="social-loading">Loading…</div>';
+  const auth = JSON.parse(localStorage.getItem('biteNYC.auth') || '{}');
+  if (!auth.isAuthed || !auth.user?.id) {
+    list.innerHTML = '<div class="social-empty">Sign in to see your friends.</div>';
+    return;
+  }
+  try {
+    const [friendsRes, allRes] = await Promise.all([
+      fetch(`/api/users/${auth.user.id}/friends`),
+      fetch('/api/users')
+    ]);
+    socialMyFriends = await friendsRes.json();
+    socialAllUsers = await allRes.json();
+    document.getElementById('socialSub').textContent =
+      socialMyFriends.length ? `You have ${socialMyFriends.length} friend${socialMyFriends.length === 1 ? '' : 's'}.` : "You haven't added any friends yet.";
+    renderSocialFriends();
+    renderSocialSuggestions();
+  } catch (err) {
+    console.error(err);
+    list.innerHTML = '<div class="social-empty">Couldn\'t load friends.</div>';
+  }
+}
+function renderSocialFriends() {
+  const list = document.getElementById('socialFrList');
+  if (!socialMyFriends.length) {
+    list.innerHTML = '<div class="social-empty">No friends yet — add some above!</div>';
+    return;
+  }
+  list.innerHTML = socialMyFriends.map(f => `
+    <div class="social-row">
+      <div class="social-avatar">${(f.name || '?').charAt(0).toUpperCase()}</div>
+      <div class="social-name">${f.name}<span class="social-school">${f.school || ''}</span></div>
+      <button class="fr-action danger" onclick="removeSocialFriend(${f.id})">Remove</button>
+    </div>`).join('');
+}
+function renderSocialSuggestions() {
+  const q = (document.getElementById('socialFrSearch').value || '').toLowerCase().trim();
+  const auth = JSON.parse(localStorage.getItem('biteNYC.auth') || '{}');
+  const myId = auth.user?.id;
+  const friendIds = new Set(socialMyFriends.map(f => f.id));
+  let candidates = socialAllUsers.filter(u =>
+    u.id !== myId && !friendIds.has(u.id) &&
+    (q === '' || u.name.toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q))
+  ).slice(0, 6);
+  const wrap = document.getElementById('socialFrSuggestions');
+  if (!candidates.length) {
+    wrap.innerHTML = q ? '<div class="social-empty" style="padding:14px;font-size:13px">No matches</div>' : '';
+    return;
+  }
+  wrap.innerHTML = candidates.map(u => `
+    <div class="fr-suggest-row">
+      <div class="social-avatar">${(u.name || '?').charAt(0).toUpperCase()}</div>
+      <div class="fr-suggest-name">${u.name} <span class="fr-suggest-school">${u.school || ''}</span></div>
+      <button class="fr-add-btn" onclick="addSocialFriend(${u.id})">+ Add</button>
+    </div>`).join('');
+}
+async function addSocialFriend(friendId) {
+  const auth = JSON.parse(localStorage.getItem('biteNYC.auth') || '{}');
+  try {
+    await fetch(`/api/users/${auth.user.id}/friends`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ friendId })
+    });
+    await loadSocialFriends();
+    showToast('Friend added!');
+  } catch (err) { console.error(err); showToast('Could not add friend.'); }
+}
+async function removeSocialFriend(friendId) {
+  if (!confirm('Remove this friend?')) return;
+  const auth = JSON.parse(localStorage.getItem('biteNYC.auth') || '{}');
+  try {
+    await fetch(`/api/users/${auth.user.id}/friends/${friendId}`, { method:'DELETE' });
+    await loadSocialFriends();
+    showToast('Friend removed.');
+  } catch (err) { console.error(err); showToast('Could not remove friend.'); }
+}
 async function boot() {
   await restoreAuth();
   favState = await BiteServices.favourites.getFavourites();
@@ -2233,7 +2533,7 @@ async function boot() {
   checkedIn = checkedInSet;
   userLocation = await BiteServices.location.getLocation();
   applyAuthUI();
-  buildDeals();
+  await buildDeals();
   await renderFavourites();
   initMap();
   // If not logged in, show login screen on first visit
@@ -2241,6 +2541,11 @@ async function boot() {
     loginSchool = null;
     applyLoginTheme(null);
     showLogin();
+  } else {
+    // Already authenticated — make sure login view is hidden
+    document.body.classList.remove('view-login');
+    document.getElementById('screenLogin').classList.remove('visible');
+    document.getElementById('screenDashboard').classList.remove('login-open');
   }
 }
 boot();
