@@ -52,7 +52,7 @@
         "discount": "10 dollar combo",
         "time": "11:00 AM - 3:00 PM",
         "date": "Monday to Friday",
-        "school": "columbia"
+        "school": "nyu"
     },
     {
         "title": "Free Coffee Monday",
@@ -66,15 +66,15 @@
         "school": "nyu"
     },
     {
-        "title": "NYU Student Discount",
-        "description": "15% off with valid NYU ID",
+        "title": "Student Discount",
+        "description": "15% off with valid student ID",
         "restaurant": "Chipotle Mexican Grill",
         "location": "Broadway and Houston St",
         "type": "deal",
         "discount": "15% off",
         "time": "All day",
         "date": "Every day",
-        "school": "nyu"
+        "school": "columbia"
     },
     {
         "title": "Free Food Fridays",

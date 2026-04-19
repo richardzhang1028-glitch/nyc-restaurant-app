@@ -288,6 +288,11 @@ body.view-detail .detail-sheet { transform:translate(-50%, 0); opacity:1; pointe
 .social-count { font-family:var(--serif); font-size:20px; color:var(--p); display:block; line-height:1; }
 .social-count-label { font-size:10px; color:var(--ink-3); }
 .social-bar { position:absolute; left:0; top:0; bottom:0; background:var(--p); opacity:1; border-radius:14px 0 0 14px; transition:width .4s var(--ease); z-index:0; pointer-events:none; }
+.activity-item { display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--surface); border:1px solid var(--border); border-radius:14px; }
+.activity-icon { font-size:18px; flex-shrink:0; }
+.activity-text { flex:1; font-size:13px; color:var(--ink-2); line-height:1.45; }
+.activity-text strong { color:var(--ink); font-weight:600; }
+.activity-time { font-size:11px; color:var(--ink-3); flex-shrink:0; white-space:nowrap; }
 .social-empty { text-align:center; padding:48px 20px; color:var(--ink-3); font-size:14px; }
 .social-loading { text-align:center; padding:48px 20px; color:var(--ink-3); font-size:13px; }
 .fr-action { padding:5px 12px; border-radius:99px; border:1.5px solid var(--border); background:transparent; font-size:11px; font-weight:500; color:var(--ink-2); cursor:pointer; transition:all .2s; font-family:var(--sans); z-index:1; }
@@ -789,7 +794,7 @@ body.view-detail .detail-nav-btn.next { transform:translateY(-50%) translateX(0)
 
 </style>
 </head>
-<body class="view-home view-login">
+<body class="view-home">
 <div id="screenDashboard">
   <nav class="nav">
     <div class="nav-logo" onclick="goHome()">
@@ -951,6 +956,7 @@ body.view-detail .detail-nav-btn.next { transform:translateY(-50%) translateX(0)
         <div class="social-tabs">
           <button class="social-tab active" id="socialScopeMine" onclick="setSocialScope('mine')">My School</button>
           <button class="social-tab" id="socialScopeAll" onclick="setSocialScope('all')">All Schools</button>
+          <button class="social-tab" id="socialScopeFriends" onclick="setSocialScope('friends')">Friends</button>
         </div>
         <div class="social-toggle">
           <button class="social-toggle-btn active" id="socialTypeUsers" onclick="setSocialType('users')">👥 Students</button>
@@ -971,7 +977,10 @@ body.view-detail .detail-nav-btn.next { transform:translateY(-50%) translateX(0)
             </div>
             <div class="fr-suggestions" id="socialFrSuggestions"></div>
           </div>
+          <div class="fr-add-title" style="padding:0 0 10px;">Your Friends</div>
           <div class="social-list" id="socialFrList"><div class="social-loading">Loading…</div></div>
+          <div class="fr-add-title" style="padding:20px 0 10px;">Recent Activity</div>
+          <div class="social-list" id="socialActivityList"><div class="social-loading">Loading…</div></div>
         </div>
       </div>
     </section>
@@ -1118,7 +1127,7 @@ const BiteServices = (() => {
     catch { return fallback; }
   };
   const writeJSON = (key, value) => localStorage.setItem(key, JSON.stringify(value));
-  const defaultFavs = () => ({ favourites:[], lists:[{id:'all', name:'All'}, {id:'date', name:'Date Night'}, {id:'quick', name:'Quick Bites'}, {id:'study', name:'Study Spots'}] });
+  const defaultFavs = () => ({ favourites:[], lists:[{id:'all', name:'All'}, {id:'quick', name:'Quick Bite'}, {id:'date', name:'Date Night'}, {id:'latenight', name:'Late Night'}, {id:'healthy', name:'Healthy'}, {id:'study', name:'Study Spot'}] });
   const allRestaurants = () => Object.values(ALL_RESTAURANTS).flat();
   return {
     auth:{
@@ -1183,14 +1192,20 @@ const BiteServices = (() => {
         const cuisine = doc.cuisine || 'Restaurant';
         const price = doc.price || '$$';
         // Synthesize tags/moods from cuisine + price (since DB doesn't have them)
-        const tags = [];
-        if (price === '$') tags.push('cheap');
-        if (doc.rating >= 4.5) tags.push('toprated');
-        if (/cafe|coffee/i.test(cuisine)) tags.push('study');
-        const moods = [];
         const nameLower = (doc.name || '').toLowerCase();
         const cuisineLower = cuisine.toLowerCase();
         const combined = cuisineLower + ' ' + nameLower;
+        const tags = [];
+        if (doc.rating >= 4.5) tags.push('toprated');
+        if (price === '$') tags.push('cheap');
+        if (/pizza|burger|taco|falafel|bagel|noodle|dumpling|wing|sandwich|wrap/i.test(combined)) tags.push('quickbite');
+        if (/cafe|café|coffee|bakery|tea|brunch|pastry|starbucks/i.test(combined)) tags.push('study');
+        if (/salad|juice|vegan|vegetarian|organic|poke|acai|smoothie|health|bowl/i.test(combined)) tags.push('healthy');
+        if (/pizza|bar|pub|diner|grill|burger|wing|taco|karaoke|lounge/i.test(combined)) tags.push('latenight');
+        if (price === '$$$' || price === '$$$$' || /italian|french|japanese|sushi|steakhouse|seafood|wine|bistro|tapas/i.test(combined)) tags.push('datespot');
+        // Limit to 3 most relevant tags
+        tags.splice(3);
+        const moods = [];
         // Quick Bite: cheap, fast, grab-and-go
         if (price === '$' || /pizza|burger|taco|falafel|bagel|deli|fast|noodle|dumpling|wing|sandwich|wrap|hot dog/i.test(combined)) moods.push('quick');
         // Date Night: upscale, romantic
@@ -1289,9 +1304,11 @@ const BiteServices = (() => {
         const auth = readJSON('biteNYC.auth', {});
         const local = readJSON('biteNYC.favourites', { favourites:[], lists:[
           { id:'all', name:'All' },
+          { id:'quick', name:'Quick Bite' },
           { id:'date', name:'Date Night' },
-          { id:'quick', name:'Quick Bites' },
-          { id:'study', name:'Study Spots' }
+          { id:'latenight', name:'Late Night' },
+          { id:'healthy', name:'Healthy' },
+          { id:'study', name:'Study Spot' }
         ]});
         if (!auth.isAuthed || !auth.user?.id) return local;
 
@@ -1604,8 +1621,8 @@ function applyAuthUI() {
   document.getElementById('accountName').textContent = user?.name || 'Guest';
   document.getElementById('accountMeta').textContent = user?.email || cfg.name;
   document.getElementById('homeEyebrow').textContent = isAuthed ? cfg.name : 'NYC University Dining';
-  document.getElementById('homeTitle').textContent = isAuthed ? `Near ${cfg.short}` : 'Find food near campus.';
-  document.getElementById('homeSub').textContent = isAuthed ? 'Your campus theme is unlocked. Save favourites as you browse.' : 'Browse restaurants now. Sign in when you want to save favourites.';
+  document.getElementById('homeTitle').textContent = isAuthed ? `Near ${cfg.short}` : 'Find food near your campus.';
+  document.getElementById('homeSub').textContent = isAuthed ? 'Your campus theme is unlocked. Save favourites as you browse.' : 'Browse freely, or sign in with your university email to unlock restaurants near your school, deals, and leaderboard.';
   document.getElementById('favouritesSub').textContent = isAuthed ? 'Organize the places you want to revisit.' : 'Sign in to save restaurants and organize them for later.';
   setTheme(school);
 }
@@ -1723,9 +1740,11 @@ async function removeFavourite(id, listId) {
 }
 function inferFavLists(r) {
   const lists = ['all'];
-  if (r.moods.includes('date')) lists.push('date');
   if (r.moods.includes('quick')) lists.push('quick');
-  if (r.tags.includes('study')) lists.push('study');
+  if (r.moods.includes('date')) lists.push('date');
+  if (r.moods.includes('latenight')) lists.push('latenight');
+  if (r.moods.includes('healthy')) lists.push('healthy');
+  if (r.moods.includes('study') || r.tags.includes('study')) lists.push('study');
   return lists;
 }
 async function toggleFavourite(id) {
@@ -1927,7 +1946,7 @@ async function buildList() {
   updateMarkers(currentRests);
 }
 function tagLabel(t) {
-  return { cheap:'$ Cheap', latenight:'Late Night', study:'Study', healthy:'Healthy', toprated:'Top Rated' }[t] || t;
+  return { cheap:'$ Budget', toprated:'Top Rated', quickbite:'Quick Bite', study:'Study Spot', healthy:'Healthy', latenight:'Late Night', datespot:'Date Spot' }[t] || t;
 }
 function findRestaurant(id) {
   // Use the live backend data if available; fall back to the hardcoded list
@@ -2327,6 +2346,36 @@ async function setFavouriteList(id) {
   activeFavList = id;
   await renderFavourites();
 }
+function getTimeAgo(dateStr) {
+  const now = new Date();
+  const then = new Date(dateStr);
+  const diff = Math.floor((now - then) / 1000);
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+  return `${Math.floor(diff / 604800)}w ago`;
+}
+function openDealRestaurant(restaurantName) {
+  const all = window.BITE_RESTAURANTS ? Object.values(window.BITE_RESTAURANTS).flat() : [];
+  const name = restaurantName.toLowerCase();
+  // Try exact match first
+  let match = all.find(r => r.name.toLowerCase() === name);
+  // Try: restaurant name contains the deal's restaurant name
+  if (!match) match = all.find(r => r.name.toLowerCase().includes(name));
+  // Try: deal's restaurant name contains the restaurant name
+  if (!match) match = all.find(r => name.includes(r.name.toLowerCase()));
+  // Try: match first word (e.g. "Junzi" matches "Junzi Kitchen 君子...")
+  if (!match) {
+    const firstWord = name.split(/\s+/)[0];
+    if (firstWord.length >= 3) match = all.find(r => r.name.toLowerCase().includes(firstWord));
+  }
+  if (match) {
+    selectRestaurant(match.id);
+  } else {
+    showToast('This is an event — no restaurant page available');
+  }
+}
 async function buildDeals() {
   const strip = document.getElementById('dealStrip');
   if (!strip) return;
@@ -2340,7 +2389,7 @@ async function buildDeals() {
     }
     const icons = { deal:'🏷️', free_food:'🎉', event:'☕', coupon:'🎫' };
     strip.innerHTML = active.map(d => `
-      <div class="deal-card" style="flex-shrink:0;min-width:220px;max-width:280px;">
+      <div class="deal-card" style="flex-shrink:0;min-width:220px;max-width:280px;cursor:pointer;" onclick="openDealRestaurant('${d.restaurant.replace(/'/g, "\\\\'")}')">
         <div class="deal-icon ${d.type}" style="background:${d.type === 'deal' ? '#fef3c7' : d.type === 'free_food' ? '#ecfdf5' : d.type === 'coupon' ? '#eff6ff' : '#ede9fe'}">${icons[d.type] || '🍽️'}</div>
         <div class="deal-body">
           <div class="deal-label">${d.discount || d.type}</div>
@@ -2385,6 +2434,7 @@ function setSocialScope(s) {
   socialScope = s;
   document.getElementById('socialScopeMine').classList.toggle('active', s === 'mine');
   document.getElementById('socialScopeAll').classList.toggle('active', s === 'all');
+  document.getElementById('socialScopeFriends').classList.toggle('active', s === 'friends');
   loadSocialLeaderboard();
 }
 function setSocialType(t) {
@@ -2398,15 +2448,45 @@ async function loadSocialLeaderboard() {
   list.innerHTML = '<div class="social-loading">Loading…</div>';
   const eyebrow = document.getElementById('socialEyebrow');
   eyebrow.textContent = school === 'nyu' ? 'NYU Social' : 'Columbia Social';
+  const auth = JSON.parse(localStorage.getItem('biteNYC.auth') || '{}');
+  const myId = auth.user?.id;
+
+  // If "Friends" scope, fetch friends list first
+  let friendIds = null;
+  if (socialScope === 'friends') {
+    if (!auth.isAuthed || !myId) {
+      list.innerHTML = '<div class="social-empty">Sign in to see your friends\' rankings.</div>';
+      return;
+    }
+    try {
+      const fRes = await fetch(`/api/users/${myId}/friends`);
+      const friends = await fRes.json();
+      friendIds = new Set(friends.map(f => f.id));
+      friendIds.add(myId); // include yourself in friends leaderboard
+    } catch (err) {
+      list.innerHTML = '<div class="social-empty">Couldn\'t load friends.</div>';
+      return;
+    }
+  }
+
   const url = socialType === 'users'
     ? `/api/leaderboard${socialScope === 'mine' ? `?school=${school}` : ''}`
     : `/api/leaderboard/restaurants${socialScope === 'mine' ? `?school=${school}` : ''}`;
   try {
     const res = await fetch(url);
-    const data = await res.json();
-    if (!data.length) { list.innerHTML = '<div class="social-empty">No data yet — go check in somewhere!</div>'; return; }
-    const auth = JSON.parse(localStorage.getItem('biteNYC.auth') || '{}');
-    const myId = auth.user?.id;
+    let data = await res.json();
+
+    // Filter to friends only if in friends scope
+    if (socialScope === 'friends' && friendIds && socialType === 'users') {
+      data = data.filter(row => friendIds.has(row.user_id));
+    }
+
+    if (!data.length) {
+      list.innerHTML = socialScope === 'friends'
+        ? '<div class="social-empty">No check-ins from friends yet. Add some friends first!</div>'
+        : '<div class="social-empty">No data yet — go check in somewhere!</div>';
+      return;
+    }
     const maxCount = data[0].checkin_count || 1;
     const medalEmojis = ['🥇', '🥈', '🥉'];
     const schoolColors = {
@@ -2430,7 +2510,6 @@ async function loadSocialLeaderboard() {
           <div class="social-score"><span class="social-count" style="color:${colors.text}">${row.checkin_count}</span><span class="social-count-label">check-ins</span></div>
         </div>`;
       } else {
-        // Find restaurant image from cached data
         const all = window.BITE_RESTAURANTS ? Object.values(window.BITE_RESTAURANTS).flat() : [];
         const match = all.find(r => r.name === row.restaurant_name);
         const hasImg = match && match.hero && !match.hero.includes('unsplash.com/photo-1555396273');
@@ -2450,10 +2529,13 @@ async function loadSocialLeaderboard() {
 }
 async function loadSocialFriends() {
   const list = document.getElementById('socialFrList');
+  const activityList = document.getElementById('socialActivityList');
   list.innerHTML = '<div class="social-loading">Loading…</div>';
+  activityList.innerHTML = '<div class="social-loading">Loading…</div>';
   const auth = JSON.parse(localStorage.getItem('biteNYC.auth') || '{}');
   if (!auth.isAuthed || !auth.user?.id) {
     list.innerHTML = '<div class="social-empty">Sign in to see your friends.</div>';
+    activityList.innerHTML = '';
     return;
   }
   try {
@@ -2467,9 +2549,57 @@ async function loadSocialFriends() {
       socialMyFriends.length ? `You have ${socialMyFriends.length} friend${socialMyFriends.length === 1 ? '' : 's'}.` : "You haven't added any friends yet.";
     renderSocialFriends();
     renderSocialSuggestions();
+
+    // Load friend activity (recent check-ins)
+    if (socialMyFriends.length) {
+      const friendIds = socialMyFriends.map(f => f.id);
+      const checkinPromises = friendIds.map(id => fetch(`/api/checkins/user/${id}`).then(r => r.json()).catch(() => []));
+      const allCheckins = await Promise.all(checkinPromises);
+      const friendMap = new Map(socialMyFriends.map(f => [f.id, f]));
+      // Flatten and tag each check-in with friend info
+      let activity = [];
+      allCheckins.forEach((checkins, idx) => {
+        const friend = friendMap.get(friendIds[idx]);
+        if (friend && checkins.length) {
+          checkins.forEach(c => {
+            activity.push({
+              name: friend.name,
+              school: friend.school || 'columbia',
+              restaurant: c.restaurant_name,
+              time: c.checkin_time || c.created_at
+            });
+          });
+        }
+      });
+      // Sort by most recent first
+      activity.sort((a, b) => new Date(b.time) - new Date(a.time));
+      // Show top 15
+      activity = activity.slice(0, 15);
+      if (!activity.length) {
+        activityList.innerHTML = '<div class="social-empty">No recent activity from friends.</div>';
+        return;
+      }
+      const schoolColors = {
+        columbia: { avatar:'rgba(26,107,181,0.12)', text:'#1A6BB5' },
+        nyu: { avatar:'rgba(139,29,181,0.12)', text:'#8B1DB5' }
+      };
+      const defaultColors = schoolColors.columbia;
+      activityList.innerHTML = activity.map(a => {
+        const colors = schoolColors[a.school] || defaultColors;
+        const timeAgo = getTimeAgo(a.time);
+        return `<div class="activity-item">
+          <div class="social-avatar" style="background:${colors.avatar};color:${colors.text};min-width:32px;width:32px;height:32px;font-size:12px;">${(a.name || '?').charAt(0).toUpperCase()}</div>
+          <div class="activity-text"><strong>${a.name}</strong> checked in at <strong>${a.restaurant}</strong></div>
+          <div class="activity-time">${timeAgo}</div>
+        </div>`;
+      }).join('');
+    } else {
+      activityList.innerHTML = '<div class="social-empty">Add friends to see their activity.</div>';
+    }
   } catch (err) {
     console.error(err);
     list.innerHTML = '<div class="social-empty">Couldn\'t load friends.</div>';
+    activityList.innerHTML = '';
   }
 }
 function renderSocialFriends() {
@@ -2478,12 +2608,20 @@ function renderSocialFriends() {
     list.innerHTML = '<div class="social-empty">No friends yet — add some above!</div>';
     return;
   }
-  list.innerHTML = socialMyFriends.map(f => `
-    <div class="social-row">
-      <div class="social-avatar">${(f.name || '?').charAt(0).toUpperCase()}</div>
-      <div class="social-name">${f.name}<span class="social-school">${f.school || ''}</span></div>
+  const schoolColors = {
+    columbia: { avatar:'rgba(26,107,181,0.12)', text:'#1A6BB5' },
+    nyu: { avatar:'rgba(139,29,181,0.12)', text:'#8B1DB5' }
+  };
+  const defaultColors = schoolColors.columbia;
+  list.innerHTML = socialMyFriends.map(f => {
+    const sc = f.school || 'columbia';
+    const colors = schoolColors[sc] || defaultColors;
+    return `<div class="social-row">
+      <div class="social-avatar" style="background:${colors.avatar};color:${colors.text}">${(f.name || '?').charAt(0).toUpperCase()}</div>
+      <div class="social-name">${f.name}<span class="social-school">${sc}</span></div>
       <button class="fr-action danger" onclick="removeSocialFriend(${f.id})">Remove</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 function renderSocialSuggestions() {
   const q = (document.getElementById('socialFrSearch').value || '').toLowerCase().trim();
@@ -2499,12 +2637,20 @@ function renderSocialSuggestions() {
     wrap.innerHTML = q ? '<div class="social-empty" style="padding:14px;font-size:13px">No matches</div>' : '';
     return;
   }
-  wrap.innerHTML = candidates.map(u => `
-    <div class="fr-suggest-row">
-      <div class="social-avatar">${(u.name || '?').charAt(0).toUpperCase()}</div>
-      <div class="fr-suggest-name">${u.name} <span class="fr-suggest-school">${u.school || ''}</span></div>
+  const schoolColors = {
+    columbia: { avatar:'rgba(26,107,181,0.12)', text:'#1A6BB5' },
+    nyu: { avatar:'rgba(139,29,181,0.12)', text:'#8B1DB5' }
+  };
+  const defaultColors = schoolColors.columbia;
+  wrap.innerHTML = candidates.map(u => {
+    const sc = u.school || 'columbia';
+    const colors = schoolColors[sc] || defaultColors;
+    return `<div class="fr-suggest-row">
+      <div class="social-avatar" style="background:${colors.avatar};color:${colors.text}">${(u.name || '?').charAt(0).toUpperCase()}</div>
+      <div class="fr-suggest-name">${u.name} <span class="fr-suggest-school">${sc}</span></div>
       <button class="fr-add-btn" onclick="addSocialFriend(${u.id})">+ Add</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 async function addSocialFriend(friendId) {
   const auth = JSON.parse(localStorage.getItem('biteNYC.auth') || '{}');
@@ -2537,11 +2683,7 @@ async function boot() {
   await renderFavourites();
   initMap();
   // If not logged in, show login screen on first visit
-  if (!isAuthed) {
-    loginSchool = null;
-    applyLoginTheme(null);
-    showLogin();
-  } else {
+  if (isAuthed) {
     // Already authenticated — make sure login view is hidden
     document.body.classList.remove('view-login');
     document.getElementById('screenLogin').classList.remove('visible');
