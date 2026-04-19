@@ -2388,16 +2388,28 @@ async function buildDeals() {
       return;
     }
     const icons = { deal:'🏷️', free_food:'🎉', event:'☕', coupon:'🎫' };
-    strip.innerHTML = active.map(d => `
-      <div class="deal-card" style="flex-shrink:0;min-width:220px;max-width:280px;cursor:pointer;" onclick="openDealRestaurant('${d.restaurant.replace(/'/g, "\\\\'")}')">
-        <div class="deal-icon ${d.type}" style="background:${d.type === 'deal' ? '#fef3c7' : d.type === 'free_food' ? '#ecfdf5' : d.type === 'coupon' ? '#eff6ff' : '#ede9fe'}">${icons[d.type] || '🍽️'}</div>
+    strip.innerHTML = active.map(d => {
+      const all = window.BITE_RESTAURANTS ? Object.values(window.BITE_RESTAURANTS).flat() : [];
+      const dealName = d.restaurant.toLowerCase();
+      const words = d.restaurant.split(' ').filter(w => w.length >= 4 && !['the','and','for','with'].includes(w.toLowerCase()));
+      let match = all.find(r => r.name.toLowerCase().includes(dealName));
+      if (!match && words.length) match = all.find(r => r.name.toLowerCase().includes(words[0].toLowerCase()));
+      if (!match && words.length > 1) match = all.find(r => r.name.toLowerCase().includes(words[1].toLowerCase()));
+      const hasImg = match && match.hero && !match.hero.includes('unsplash.com/photo-1555396273');
+      const iconStyle = hasImg
+        ? `background-image:url('${match.hero}');background-size:cover;background-position:center;border-radius:10px;`
+        : `background:${d.type === 'deal' ? '#fef3c7' : d.type === 'free_food' ? '#ecfdf5' : d.type === 'coupon' ? '#eff6ff' : '#ede9fe'}`;
+      const iconContent = hasImg ? '' : (icons[d.type] || '🍽️');
+      return `<div class="deal-card" style="flex-shrink:0;min-width:220px;max-width:280px;cursor:pointer;" onclick="openDealRestaurant('${d.restaurant.replace(/'/g, "\\'")}')">
+        <div class="deal-icon ${d.type}" style="${iconStyle}">${iconContent}</div>
         <div class="deal-body">
           <div class="deal-label">${d.discount || d.type}</div>
           <div class="deal-title">${d.title}</div>
           <div class="deal-time">${d.time} · ${d.date}</div>
           <div style="font-size:11px;color:var(--ink-3);margin-top:2px;">${d.restaurant}</div>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   } catch (err) {
     console.warn('Deals fetch failed:', err);
     strip.innerHTML = '';
@@ -2679,9 +2691,9 @@ async function boot() {
   checkedIn = checkedInSet;
   userLocation = await BiteServices.location.getLocation();
   applyAuthUI();
-  await buildDeals();
   await renderFavourites();
-  initMap();
+  await initMap();
+  await buildDeals();
   // If not logged in, show login screen on first visit
   if (isAuthed) {
     // Already authenticated — make sure login view is hidden
