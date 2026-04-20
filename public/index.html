@@ -1030,7 +1030,6 @@ body.view-detail .detail-nav-btn.next { transform:translateY(-50%) translateX(0)
 </div>
 
 <div id="screenLogin">
-  <button class="login-close-btn" onclick="closeLogin()" aria-label="Close login">×</button>
   <div class="login-page">
     <div class="brand-panel" id="brandPanel">
       <div class="brand-logo"><div class="brand-logo-icon">🍜</div><div class="brand-logo-name">BITE NYC</div></div>
@@ -1777,7 +1776,12 @@ function resetDiscovery() {
 }
 async function setView(view, opts = {}) {
   if (view === 'favourites' && !isAuthed) {
-    showToast('Sign in to save your favourites');
+    showToast('Sign in to access your favorites');
+    return;
+  }
+  if (view === 'social' && !isAuthed) {
+    showToast('Sign in to access the social page');
+    return;
   }
   currentView = view;
   document.body.classList.remove('view-home', 'view-detail', 'view-favourites', 'view-social', 'view-map', 'view-login');
