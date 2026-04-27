@@ -70,5 +70,47 @@ router.get('/user/:userId', async (req, res) => {
   }
 });
 
+// ── GET /api/checkins/restaurant/:place_id  ───────────
+// Get all check-ins at a specific restaurant, with user info joined in.
+// Used by the restaurant detail page to show "who checked in here".
+router.get('/restaurant/:place_id', async (req, res) => {
+  try {
+    const checkins = await Checkin.aggregate([
+      // Match check-ins at this specific restaurant
+      { $match: { restaurant_place_id: req.params.place_id } },
+      // Sort newest first
+      { $sort: { checkin_time: -1 } },
+      // Limit to 50 most recent
+      { $limit: 50 },
+      // Join with users collection to get name + school
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'user_id',
+          foreignField: 'id',
+          as: 'user'
+        }
+      },
+      // Flatten the user array
+      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+      // Shape output
+      {
+        $project: {
+          _id: 1,
+          user_id: 1,
+          user_name: '$user.name',
+          school: '$user.school',
+          checkin_time: 1,
+          restaurant_name: 1
+        }
+      }
+    ]);
+    res.json(checkins);
+  } catch (err) {
+    console.error('Error fetching restaurant check-ins:', err);
+    res.status(500).json({ error: 'Failed to fetch check-ins' });
+  }
+});
+
 module.exports = router;
 module.exports.Checkin = Checkin;

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0">
 <title>BITE NYC</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
@@ -149,9 +149,20 @@ body.is-auth .nav-avatar { display:flex; }
 .dash-main { position:fixed; inset:0; overflow:hidden; pointer-events:none; }
 .map-stage { position:fixed; inset:0; z-index:1; background:var(--bg); pointer-events:all; }
 #map { width:100%; height:100%; pointer-events:auto; transition:filter .6s var(--ease), opacity .6s var(--ease); }
-body.view-home #map, body.view-favourites #map { filter:none; opacity:1; }
+body.view-home #map { opacity:0; }
+body.view-favourites #map { filter:none; opacity:1; }
 body.view-detail #map { filter:none; opacity:1; }
 body.view-login #map { filter:grayscale(1) blur(3px); opacity:.28; }
+
+/* Solid background for Discover view */
+body.view-home .map-stage::before {
+  content:'';
+  position:absolute;
+  inset:0;
+  background:var(--bg);
+  z-index:0;
+  pointer-events:none;
+}
 .map-controls { position:absolute; top:16px; right:16px; z-index:170; display:flex; flex-direction:column; gap:4px; opacity:0; transform:translateY(-8px); pointer-events:none; transition:opacity .35s var(--ease) .2s, transform .35s var(--ease) .2s; }
 body.view-detail .map-controls { opacity:1; transform:translateY(0); pointer-events:all; }
 .map-ctrl-btn { width:36px; height:36px; background:white; border:1px solid var(--border); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:17px; color:var(--ink-2); box-shadow:0 2px 8px rgba(0,0,0,.08); user-select:none; }
@@ -251,10 +262,39 @@ body.view-detail .detail-sheet { transform:translate(-50%, 0); opacity:1; pointe
 .review-input { flex:1; min-height:44px; resize:vertical; max-height:110px; border:1.5px solid var(--border); border-radius:12px; padding:11px 12px; outline:none; font-size:13px; color:var(--ink); }
 .review-input:focus { border-color:var(--p); box-shadow:0 0 0 3px var(--p-tint); }
 .review-submit, .checkin-btn { height:44px; border-radius:8px; border:none; background:var(--p); color:#fff; font-size:13px; font-weight:700; padding:0 16px; }
-.review-list { display:grid; gap:8px; }
-.review-item { padding:10px 12px; border-radius:12px; border:1px solid var(--border); background:var(--bg); }
-.review-author { font-size:12px; font-weight:700; color:var(--ink); margin-bottom:3px; }
-.review-text { font-size:13px; color:var(--ink-2); line-height:1.45; }
+.checkin-list { display:flex; flex-direction:column; gap:8px; }
+.checkin-list-item { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--bg); border:1px solid var(--border); border-radius:12px; }
+.checkin-list-avatar { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:13px; flex-shrink:0; background:var(--p-tint); color:var(--p); }
+.checkin-list-avatar.columbia { background:rgba(26,107,181,0.12); color:#1A6BB5; }
+.checkin-list-avatar.nyu { background:rgba(139,29,181,0.12); color:#8B1DB5; }
+.checkin-list-name { flex:1; font-size:13px; font-weight:600; color:var(--ink); }
+.checkin-list-time { font-size:11px; color:var(--ink-3); flex-shrink:0; }
+.checkin-list-empty { font-size:13px; color:var(--ink-3); text-align:center; padding:14px; }
+.review-list { display:grid; gap:10px; }
+.review-item { padding:12px 14px; border-radius:12px; border:1px solid var(--border); background:var(--bg); }
+.review-header { display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap; }
+.review-author { font-size:12px; font-weight:700; color:var(--ink); }
+.review-stars { font-size:11px; color:#f59e0b; letter-spacing:1px; }
+.review-time { font-size:10px; color:var(--ink-3); }
+.review-text { font-size:13px; color:var(--ink-2); line-height:1.45; margin-bottom:8px; }
+.review-actions { display:flex; align-items:center; gap:8px; }
+.reply-btn { font-size:11px; font-weight:600; color:var(--p); background:transparent; border:none; padding:2px 0; cursor:pointer; }
+.reply-btn:hover { text-decoration:underline; }
+.reply-count { font-size:11px; color:var(--ink-3); }
+
+/* Replies (nested) */
+.reply-thread { margin-top:8px; padding-left:14px; border-left:2px solid var(--border); display:flex; flex-direction:column; gap:6px; }
+.reply-item { padding:8px 10px; border-radius:10px; background:#fff; border:1px solid var(--border); }
+.reply-header { display:flex; align-items:center; gap:6px; margin-bottom:2px; }
+.reply-author { font-size:11px; font-weight:700; color:var(--ink); }
+.reply-time { font-size:10px; color:var(--ink-3); }
+.reply-text { font-size:12px; color:var(--ink-2); line-height:1.4; }
+
+/* Reply input form (shown when user clicks Reply) */
+.reply-form { margin-top:8px; display:flex; gap:6px; }
+.reply-input { flex:1; min-height:36px; max-height:80px; resize:vertical; border:1.5px solid var(--border); border-radius:10px; padding:8px 10px; outline:none; font-size:12px; color:var(--ink); font-family:var(--sans); background:#fff; }
+.reply-input:focus { border-color:var(--p); box-shadow:0 0 0 3px var(--p-tint); }
+.reply-submit { height:36px; padding:0 12px; border-radius:8px; border:none; background:var(--p); color:#fff; font-size:12px; font-weight:600; cursor:pointer; flex-shrink:0; }
 .detail-actions { display:flex; gap:10px; padding-top:2px; }
 .checkin-btn { flex:1; }
 .checkin-btn.checked { background:#059669; }
@@ -378,37 +418,220 @@ body.view-detail .detail-sheet { transform:translate(-50%, 0); opacity:1; pointe
 }
 
 @media(max-width:767px) {
+  /* ===== Login page ===== */
   .login-page { grid-template-columns:1fr; }
   .brand-panel { display:none; }
-  .form-panel { padding:48px 32px; }
+  .form-panel { padding:48px 24px; }
   .form-inner { max-width:100%; }
-  .nav { padding:0 14px; gap:10px; }
-  .nav-tabs { margin-left:auto; }
-  .nav-tab { padding:5px 10px; }
+  .form-top-bar { right:24px; top:24px; }
+
+  /* ===== Top nav ===== */
+  .nav {
+    padding:0 10px;
+    gap:6px;
+    height:56px;
+  }
+  .nav-tabs {
+    margin-left:auto;
+    padding:2px;
+    gap:1px;
+  }
+  .nav-tab {
+    padding:5px 8px;
+    font-size:12px;
+  }
   .nav-logo-name { display:none; }
+  .nav-logo-icon { width:30px; height:30px; font-size:15px; }
+  .nav-school-badge { font-size:11px; padding:3px 8px; }
+  .nav-avatar { width:28px; height:28px; font-size:12px; }
+  .signin-btn { height:32px; padding:0 12px; font-size:12px; }
+  :root { --nav-h:56px; }
+
+  /* ===== Floating panels (Favourites / Social) ===== */
   .floating-panel {
-    top:68px;
-    width:calc(100vw - 16px);
-    max-height:calc(100vh - 138px);
+    top:64px;
+    width:calc(100vw - 12px);
+    max-height:calc(100vh - 80px);
     border-radius:16px;
   }
-  .panel-head { padding:18px 18px 10px; }
-  .mood-row, .filter-row { padding-left:18px; padding-right:18px; }
-  .sidebar-toggle { margin-left:18px; margin-right:18px; }
-  .rest-list { grid-template-columns:1fr; padding:14px 18px 20px; }
-  .favourites-list { grid-template-columns:1fr; padding:14px 18px 20px; }
-  body.view-detail .home-panel {
+  .panel-head { padding:16px 16px 8px; }
+  .panel-title { font-size:24px; }
+  .mood-row, .filter-row { padding-left:16px; padding-right:16px; }
+  .sidebar-toggle { margin-left:16px; margin-right:16px; }
+  .rest-list { grid-template-columns:1fr; padding:12px 16px 20px; gap:12px; }
+  .favourites-list { grid-template-columns:1fr; padding:12px 16px 20px; gap:12px; }
+
+  /* ===== Discover (home container) ===== */
+  .home-container { padding:14px 12px 100px; }
+  .home-section {
+    border-radius:14px;
+    padding:16px 18px;
+    margin-bottom:14px;
+  }
+  .home-hero .panel-title { font-size:24px; }
+  .home-hero .panel-sub { font-size:12px; }
+  .panel-search input { height:42px; font-size:13px; }
+
+  /* Discover filter groups: stack vertically on mobile */
+  .filter-groups {
+    flex-direction:column;
+    align-items:stretch;
+    gap:14px;
+  }
+  .filter-groups .filter-group {
+    flex-direction:column;
+    align-items:flex-start;
+    gap:8px;
+    line-height:1.4;
+  }
+  .filter-groups .mood-row,
+  .filter-groups .filter-row {
+    width:100%;
+  }
+  .mood-chip, .filter-chip { font-size:11px; padding:5px 10px; }
+
+  /* Restaurant cards: tighter on mobile */
+  .rest-card { padding:14px; min-height:auto; }
+  .rest-card-img {
+    width:calc(100% + 28px);
+    height:110px;
+    margin:-14px -14px 10px -14px;
+  }
+  .rest-card-name { font-size:14px; }
+  .rest-section { padding:18px 16px 20px; }
+  .rest-section .section-title { font-size:20px; margin-bottom:12px; }
+
+  /* Deal cards */
+  .deal-card { min-width:200px; max-width:240px; padding:10px 12px; }
+  .deal-title { font-size:12px; }
+
+  /* ===== Map mode ===== */
+  .map-search-card {
+    top:calc(var(--nav-h) + 8px);
+    width:calc(100vw - 12px);
+    max-height:50vh;
+    overflow-y:auto;
+    padding:10px;
+    border-radius:12px;
+  }
+  .map-search-card .panel-search input { height:38px; font-size:13px; }
+  .map-filter-grid {
+    flex-direction:column;
+    gap:8px;
+    margin-top:10px;
+  }
+  .map-filter-group { width:100%; }
+  .map-search-card .mood-row,
+  .map-search-card .filter-row { padding:0; }
+
+  /* Map controls (zoom buttons) */
+  .map-controls { top:auto; bottom:90px; right:10px; }
+  .map-ctrl-btn { width:38px; height:38px; }
+
+  /* ===== Detail panel ===== */
+  body.view-detail .home-panel,
+  body.view-detail .favourites-panel,
+  body.view-detail .social-panel {
     opacity:0;
     transform:translateX(-50%) scale(.95) translateY(20px);
     pointer-events:none;
   }
   .detail-sheet {
-    width:calc(100vw - 16px);
-    max-height:76vh;
+    width:100vw;
+    left:0;
+    transform:translateY(100%);
+    max-height:85vh;
     border-radius:16px 16px 0 0;
   }
-  .quick-overview { grid-template-columns:1fr 1fr 1fr; }
-  .detail-name { font-size:28px; }
+  body.view-detail .detail-sheet {
+    transform:translateY(0);
+  }
+  .detail-content { padding:14px 18px 24px; }
+  .detail-hero { margin:0 14px; min-height:130px; }
+  .detail-name { font-size:24px; }
+  .quick-overview { grid-template-columns:1fr 1fr 1fr; gap:6px; }
+  .overview-item { padding:8px; }
+  .overview-label { font-size:9px; }
+  .overview-value { font-size:13px; }
+  .detail-section { margin-bottom:14px; }
+  .detail-actions { flex-direction:column; gap:8px; }
+  .checkin-btn, .navigate-btn { width:100%; }
+
+  /* Detail back button on mobile */
+  .detail-back-btn {
+    top:calc(var(--nav-h) + 8px);
+    left:10px;
+    height:38px;
+    padding:0 14px;
+    font-size:13px;
+  }
+  .detail-nav-btn { display:none; }
+
+  /* ===== Social panel ===== */
+  .social-panel .panel-head { padding:16px 16px 0; }
+  .social-pagebar { margin:10px 16px 0; }
+  .social-pagebar-tab { font-size:12px; padding:6px 10px; }
+  .social-controls { padding:10px 16px; gap:8px; }
+  .social-tab { font-size:11px; padding:5px 10px; }
+  .social-toggle-btn { font-size:10px; padding:4px 10px; }
+  .social-content { padding:10px 16px 20px; }
+  .social-row { padding:12px 14px; gap:10px; }
+  .social-rank { font-size:18px; width:24px; }
+  .social-avatar { min-width:34px; width:34px; height:34px; font-size:13px; }
+  .social-name { font-size:13px; }
+  .social-school { display:none; }  /* save space on mobile */
+  .social-count { font-size:18px; }
+  .activity-item { padding:10px 12px; gap:10px; }
+  .activity-text { font-size:12px; }
+
+  /* Friends section */
+  .fr-add-section { padding:12px; }
+  .fr-search { font-size:12px; }
+  .fr-suggest-row { padding:6px 8px; }
+  .fr-suggest-name { font-size:12px; }
+
+  /* ===== Account menu ===== */
+  .account-menu {
+    width:200px;
+    right:-4px;
+  }
+
+  /* ===== Toast ===== */
+  .toast {
+    bottom:20px;
+    font-size:12px;
+    padding:9px 16px;
+    max-width:calc(100vw - 32px);
+    white-space:normal;
+    text-align:center;
+  }
+
+  /* ===== Location modal ===== */
+  .location-modal-content {
+    padding:24px 20px;
+  }
+
+  /* ===== Reviews + replies ===== */
+  .review-item { padding:10px 12px; }
+  .review-header { gap:6px; }
+  .review-text { font-size:12px; }
+  .reply-thread { padding-left:10px; }
+  .reply-item { padding:7px 9px; }
+  .reply-text { font-size:11px; }
+
+  /* ===== Recent check-ins list ===== */
+  .checkin-list-item { padding:8px 10px; gap:8px; }
+  .checkin-list-avatar { width:28px; height:28px; font-size:12px; }
+  .checkin-list-name { font-size:12px; }
+  .checkin-list-time { font-size:10px; }
+}
+
+/* ===== Extra-small screens (iPhone SE, ~360px) ===== */
+@media(max-width:380px) {
+  .nav-tab { padding:5px 6px; font-size:11px; }
+  .home-hero .panel-title { font-size:22px; }
+  .panel-title { font-size:22px; }
+  .detail-name { font-size:22px; }
 }
 
 /* ==================== HOME — INDEPENDENT FLOATING CARDS ==================== */
@@ -644,17 +867,6 @@ body.view-map .map-stage,
 body.view-detail .dash-main,
 body.view-detail .map-stage { pointer-events:all; }
 
-@media(max-width:767px) {
-  .map-search-card {
-    top:calc(var(--nav-h) + 10px);
-    width:calc(100vw - 16px);
-    max-height:42vh;
-    overflow-y:auto;
-    padding:12px;
-  }
-  .map-filter-grid { grid-template-columns:1fr; gap:9px; }
-  .map-search-card .stoggle-btn { min-width:70px; }
-}
 
 /* ==================== USER LOCATION MARKER ==================== */
 .user-marker .user-dot {
@@ -853,17 +1065,16 @@ body.view-detail .detail-nav-btn.next { transform:translateY(-50%) translateX(0)
       </div>
       <div class="map-filter-grid">
         <div class="map-filter-group">
-          <div class="filter-label">Type</div>
-          <div class="mood-row">
-            <button class="mood-chip active" data-mood="all" onclick="setMood(this,'all')">All</button>
-            <button class="mood-chip" data-mood="quick" onclick="setMood(this,'quick')">🍕 Quick Bite</button>
-            <button class="mood-chip" data-mood="date" onclick="setMood(this,'date')">🕯 Date Night</button>
-            <button class="mood-chip" data-mood="latenight" onclick="setMood(this,'latenight')">🌙 Late Night</button>
-            <button class="mood-chip" data-mood="healthy" onclick="setMood(this,'healthy')">🥗 Healthy</button>
-            <button class="mood-chip" data-mood="study" onclick="setMood(this,'study')">☕ Study Spot</button>
-            <button class="mood-chip" data-mood="nearby" onclick="setMood(this,'nearby')">📍 Nearby</button>
-          </div>
-        </div>
+  <div class="filter-label">Vibe</div>
+  <div class="mood-row">
+    <button class="mood-chip active" data-mood="all" onclick="setMood(this,'all')">All</button>
+    <button class="mood-chip" data-mood="quick" onclick="setMood(this,'quick')">🍕 Casual</button>
+    <button class="mood-chip" data-mood="study" onclick="setMood(this,'study')">☕ Study-Friendly</button>
+    <button class="mood-chip" data-mood="healthy" onclick="setMood(this,'healthy')">🥗 Healthy</button>
+    <button class="mood-chip" data-mood="upscale" onclick="setMood(this,'upscale')">✨ Upscale</button>
+    <button class="mood-chip" data-mood="nearby" onclick="setMood(this,'nearby')">📍 Nearby</button>
+  </div>
+</div>
         <div class="map-filter-group">
           <div class="filter-label">Price</div>
           <div class="filter-row" id="mapFilterPills">
@@ -898,17 +1109,21 @@ body.view-detail .detail-nav-btn.next { transform:translateY(-50%) translateX(0)
         <section class="home-section toggle-card">
           <div class="filter-groups">
             <div class="filter-group">
-              <div class="filter-label">Type</div>
-              <div class="mood-row">
-                <button class="mood-chip active" data-mood="all" onclick="setMood(this,'all')">All</button>
-                <button class="mood-chip" data-mood="quick" onclick="setMood(this,'quick')">🍕 Quick Bite</button>
-                <button class="mood-chip" data-mood="date" onclick="setMood(this,'date')">🕯 Date Night</button>
-                <button class="mood-chip" data-mood="latenight" onclick="setMood(this,'latenight')">🌙 Late Night</button>
-                <button class="mood-chip" data-mood="healthy" onclick="setMood(this,'healthy')">🥗 Healthy</button>
-                <button class="mood-chip" data-mood="study" onclick="setMood(this,'study')">☕ Study Spot</button>
-                <button class="mood-chip" data-mood="nearby" onclick="setMood(this,'nearby')">📍 Nearby</button>
-              </div>
-            </div>
+  <div class="filter-label">Vibe</div>
+  <div class="mood-row">
+    <button class="mood-chip active" data-mood="all" onclick="setMood(this,'all')">All</button>
+    <button class="mood-chip" data-mood="quick" onclick="setMood(this,'quick')">🍕 Casual</button>
+    <button class="mood-chip" data-mood="study" onclick="setMood(this,'study')">☕ Study-Friendly</button>
+    <button class="mood-chip" data-mood="healthy" onclick="setMood(this,'healthy')">🥗 Healthy</button>
+    <button class="mood-chip" data-mood="upscale" onclick="setMood(this,'upscale')">✨ Upscale</button>
+  </div>
+</div>
+<div class="filter-group">
+  <div class="filter-label">Location</div>
+  <div class="mood-row">
+    <button class="mood-chip" data-mood="nearby" onclick="setMood(this,'nearby')">📍 Nearby</button>
+  </div>
+</div>
             <div class="filter-group">
               <div class="filter-label">Price</div>
               <div class="filter-row" id="filterRow">
@@ -1004,6 +1219,10 @@ body.view-detail .detail-nav-btn.next { transform:translateY(-50%) translateX(0)
         <div class="detail-section detail-about"><div class="detail-section-label">About</div><div class="detail-desc" id="dDesc"></div></div>
         <div class="detail-section detail-tags-block"><div class="detail-section-label">Tags</div><div class="detail-tags" id="dTags"></div></div>
         <div class="detail-section detail-address"><div class="detail-section-label">Address</div><div class="address-line" id="dAddress"></div></div>
+        <div class="detail-section detail-checkins">
+          <div class="detail-section-label">Recent Check-ins</div>
+          <div class="checkin-list" id="checkinList"></div>
+        </div>
         <div class="detail-section detail-review-form">
   <div class="detail-section-label">Write a review</div>
   <div class="rating-picker" id="ratingPicker">
@@ -1094,7 +1313,7 @@ const SCHOOL_FOCUS = {
   nyu:{lat:40.7295, lng:-73.9965, zoom:15}
 };
 const GUEST_THEME = { primary:'#555555', tint:'rgba(85,85,85,0.08)', mid:'rgba(85,85,85,0.18)' };
-const MOOD_TAG = { quick:'🍕 Quick Bite', date:'🕯 Date Night', latenight:'🌙 Late Night', healthy:'🥗 Healthy', study:'☕ Study Spot', nearby:'📍 Nearby' };
+const MOOD_TAG = { quick:'🍕 Casual', upscale:'✨ Upscale', healthy:'🥗 Healthy', study:'☕ Study-Friendly', nearby:'📍 Nearby' };
 const GOOD_FOR = { cheap:'Budget-friendly', latenight:'Late Night', study:'Study Spots', healthy:'Healthy', toprated:'Top Rated' };
 const ALL_RESTAURANTS = {
   columbia:[
@@ -1205,15 +1424,13 @@ const BiteServices = (() => {
         // Limit to 3 most relevant tags
         tags.splice(3);
         const moods = [];
-        // Quick Bite: cheap, fast, grab-and-go
+        // Casual: cheap, fast, grab-and-go
         if (price === '$' || /pizza|burger|taco|falafel|bagel|deli|fast|noodle|dumpling|wing|sandwich|wrap|hot dog/i.test(combined)) moods.push('quick');
-        // Date Night: upscale, romantic
-        if (price === '$$$' || price === '$$$$' || /italian|french|japanese|sushi|steakhouse|seafood|wine|bistro|tapas/i.test(combined)) moods.push('date');
-        // Late Night: bars, pizza, diners, late-friendly
-        if (/pizza|bar|pub|diner|grill|burger|wing|taco|falafel|karaoke|lounge/i.test(combined)) moods.push('latenight');
+        // Upscale: expensive, fine dining
+        if (price === '$$$' || price === '$$$$' || /italian|french|japanese|sushi|steakhouse|seafood|wine|bistro|tapas/i.test(combined)) moods.push('upscale');
         // Healthy: salads, juice, vegan, poke
         if (/salad|juice|vegan|vegetarian|organic|poke|acai|smoothie|health|green|bowl|grain/i.test(combined)) moods.push('healthy');
-        // Study Spot: cafes, coffee shops, bakeries, quiet places
+        // Study-Friendly: cafes, coffee shops, bakeries, quiet places
         if (/cafe|café|coffee|bakery|tea|brunch|pastry|library|bookstore|starbucks|deli/i.test(combined)) moods.push('study');
         // Fallback
         if (!moods.length && price === '$') moods.push('quick');
@@ -1303,11 +1520,10 @@ const BiteServices = (() => {
         const auth = readJSON('biteNYC.auth', {});
         const local = readJSON('biteNYC.favourites', { favourites:[], lists:[
           { id:'all', name:'All' },
-          { id:'quick', name:'Quick Bite' },
-          { id:'date', name:'Date Night' },
-          { id:'latenight', name:'Late Night' },
+          { id:'quick', name:'Casual' },
+          { id:'study', name:'Study-Friendly' },
           { id:'healthy', name:'Healthy' },
-          { id:'study', name:'Study Spot' }
+          { id:'upscale', name:'Upscale' }
         ]});
         if (!auth.isAuthed || !auth.user?.id) return local;
 
@@ -1472,7 +1688,7 @@ const BiteServices = (() => {
     reviews:{
       async getReviews(restaurantId) {
         // Translate frontend numeric id → backend ObjectId, then fetch from API.
-        // Falls back to localStorage cache if backend unavailable or restaurant not found.
+        // Backend returns top-level reviews with `replies` array attached.
         const all = window.BITE_RESTAURANTS ? Object.values(window.BITE_RESTAURANTS).flat() : [];
         const r = all.find(x => x.id === restaurantId);
         if (r && r._id) {
@@ -1480,8 +1696,22 @@ const BiteServices = (() => {
             const res = await fetch(`/api/reviews/${r._id}`);
             if (res.ok) {
               const reviews = await res.json();
-              // Map backend shape (comment) to frontend shape (text)
-              return reviews.map(rv => ({ author: rv.author, text: rv.comment, rating: rv.rating }));
+              // Pass through the full review objects (with replies) for the new UI
+              return reviews.map(rv => ({
+                _id: rv._id,
+                author: rv.author,
+                text: rv.comment,        // map comment → text for display
+                comment: rv.comment,     // also keep original
+                rating: rv.rating,
+                created_at: rv.created_at,
+                replies: (rv.replies || []).map(rep => ({
+                  _id: rep._id,
+                  author: rep.author,
+                  text: rep.comment,
+                  comment: rep.comment,
+                  created_at: rep.created_at
+                }))
+              }));
             }
           } catch (err) {
             console.warn('Reviews fetch failed, falling back to local:', err);
@@ -1531,7 +1761,7 @@ let school = authState.school;
 let isAuthed = authState.isAuthed;
 let previousView = 'home';
 let currentView = 'home';
-let activeMood = null;
+let activeMoods = new Set();
 let activeFilter = 'all';
 let rankingMode = 'all';
 let searchQuery = '';
@@ -1740,8 +1970,7 @@ async function removeFavourite(id, listId) {
 function inferFavLists(r) {
   const lists = ['all'];
   if (r.moods.includes('quick')) lists.push('quick');
-  if (r.moods.includes('date')) lists.push('date');
-  if (r.moods.includes('latenight')) lists.push('latenight');
+  if (r.moods.includes('upscale')) lists.push('upscale');
   if (r.moods.includes('healthy')) lists.push('healthy');
   if (r.moods.includes('study') || r.tags.includes('study')) lists.push('study');
   return lists;
@@ -1765,7 +1994,7 @@ async function toggleFavourite(id) {
 }
 
 function resetDiscovery() {
-  activeMood = null;
+  activeMoods.clear();
   activeFilter = 'all';
   searchQuery = '';
   activeId = null;
@@ -1825,15 +2054,17 @@ async function goHome() {
 async function goBack() { await closeDetail(); }
 
 async function setMood(el, key) {
-  if (key === 'nearby' && !userLocation) {
+  if (key === 'nearby' && !userLocation && !activeMoods.has('nearby')) {
     showToast('Enable location to see nearby restaurants');
     requestLocation();
     return;
   }
-  if (key === 'all' || activeMood === key) {
-    activeMood = null;
+  if (key === 'all') {
+    activeMoods.clear();
+  } else if (activeMoods.has(key)) {
+    activeMoods.delete(key);
   } else {
-    activeMood = key;
+    activeMoods.add(key);
   }
   syncFilterUI();
   await refreshDiscoveryViews();
@@ -1863,8 +2094,8 @@ document.getElementById('mapSearchInput').addEventListener('input', async () => 
 function syncFilterUI() {
   document.querySelectorAll('.stoggle-btn[data-rank]').forEach(btn => btn.classList.toggle('active', btn.dataset.rank === rankingMode));
   document.querySelectorAll('.mood-chip[data-mood]').forEach(btn => {
-    if (btn.dataset.mood === 'all') btn.classList.toggle('active', !activeMood);
-    else btn.classList.toggle('active', btn.dataset.mood === activeMood);
+    if (btn.dataset.mood === 'all') btn.classList.toggle('active', activeMoods.size === 0);
+    else btn.classList.toggle('active', activeMoods.has(btn.dataset.mood));
   });
   document.querySelectorAll('.filter-chip[data-price]').forEach(btn => btn.classList.toggle('active', btn.dataset.price === activeFilter));
 }
@@ -1878,36 +2109,49 @@ async function refreshDiscoveryViews() {
   await buildList();
 }
 async function getFilteredRests() {
-  const rests = await BiteServices.restaurants.getRestaurants({
+  // Pass null for mood — we filter manually below to support multi-select OR logic
+  let rests = await BiteServices.restaurants.getRestaurants({
     school,
-    mood: activeMood === 'nearby' ? null : activeMood,
-    price:activeFilter,
-    query:searchQuery
+    mood: null,
+    price: activeFilter,
+    query: searchQuery
   });
-  if (activeMood === 'nearby' && userLocation) {
-    return rests
+  // Filter by selected vibes (OR logic): restaurant matches ANY selected vibe
+  const vibes = [...activeMoods].filter(m => m !== 'nearby');
+  if (vibes.length) {
+    rests = rests.filter(r => vibes.some(v => r.moods.includes(v)));
+  }
+  // Apply Nearby filter on top if active
+  if (activeMoods.has('nearby') && userLocation) {
+    rests = rests
       .map(r => ({ ...r, _dist: parseFloat(calculateDistance(userLocation.lat, userLocation.lng, r.lat, r.lng)) }))
       .filter(r => r._dist <= 0.5)
       .sort((a, b) => a._dist - b._dist);
+    return rests;
   }
   return sortByRanking(rests);
 }
 async function getMapFilteredRests() {
-  const rests = await BiteServices.restaurants.getMapRestaurants({
-    mood: activeMood === 'nearby' ? null : activeMood,
-    price:activeFilter,
-    query:searchQuery
+  let rests = await BiteServices.restaurants.getMapRestaurants({
+    mood: null,
+    price: activeFilter,
+    query: searchQuery
   });
-  if (activeMood === 'nearby' && userLocation) {
-    return rests
+  const vibes = [...activeMoods].filter(m => m !== 'nearby');
+  if (vibes.length) {
+    rests = rests.filter(r => vibes.some(v => r.moods.includes(v)));
+  }
+  if (activeMoods.has('nearby') && userLocation) {
+    rests = rests
       .map(r => ({ ...r, _dist: parseFloat(calculateDistance(userLocation.lat, userLocation.lng, r.lat, r.lng)) }))
       .filter(r => r._dist <= 0.5)
       .sort((a, b) => a._dist - b._dist);
+    return rests;
   }
   return sortByRanking(rests);
 }
 function rankingScore(r) {
-  const mockHeat = r.rating * 100 + (r.tags.includes('toprated') ? 24 : 0) + (r.moods.includes('latenight') ? 10 : 0);
+  const mockHeat = r.rating * 100 + (r.tags.includes('toprated') ? 24 : 0);
   const mockMonth = ((r.id * 37) % 80) + r.rating * 12;
   const mockWeek = ((r.id * 19) % 60) + (r.moods.includes('quick') ? 25 : 0) + r.rating * 8;
   const mockCheckin = (checkedInSet.has(r.id) ? 1000 : 0) + ((r.id * 23) % 90) + r.rating;
@@ -2101,6 +2345,7 @@ async function openDetail(r) {
   document.getElementById('reviewInput').value = '';
   currentReviewRating = 5;
   setReviewRating(5);
+  await renderRestaurantCheckins(r);
   await renderReviews(r);
   updateCheckinUI();
   updateFavouriteUI();
@@ -2198,10 +2443,145 @@ async function submitReview() {
   await renderReviews(findRestaurant(activeId));
   showToast('Review added');
 }
+async function renderRestaurantCheckins(r) {
+  const list = document.getElementById('checkinList');
+  if (!list) return;
+  list.innerHTML = '<div class="checkin-list-empty">Loading…</div>';
+  if (!r.place_id) {
+    list.innerHTML = '<div class="checkin-list-empty">No check-ins yet.</div>';
+    return;
+  }
+  try {
+    const res = await fetch(`/api/checkins/restaurant/${encodeURIComponent(r.place_id)}`);
+    if (!res.ok) {
+      list.innerHTML = '<div class="checkin-list-empty">No check-ins yet.</div>';
+      return;
+    }
+    const checkins = await res.json();
+    if (!checkins.length) {
+      list.innerHTML = '<div class="checkin-list-empty">No check-ins yet. Be the first!</div>';
+      return;
+    }
+    // Show 10 most recent
+    const top = checkins.slice(0, 10);
+    list.innerHTML = top.map(c => {
+      const sc = (c.school || 'columbia').toLowerCase();
+      const name = c.user_name || 'BITE student';
+      const initial = name.charAt(0).toUpperCase();
+      const timeAgo = c.checkin_time ? getTimeAgo(c.checkin_time) : '';
+      return `<div class="checkin-list-item">
+        <div class="checkin-list-avatar ${sc}">${initial}</div>
+        <div class="checkin-list-name">${name}<span class="social-school" style="margin-left:6px;">${sc}</span></div>
+        <div class="checkin-list-time">${timeAgo}</div>
+      </div>`;
+    }).join('');
+  } catch (err) {
+    console.warn('Failed to load restaurant check-ins:', err);
+    list.innerHTML = '<div class="checkin-list-empty">No check-ins yet.</div>';
+  }
+}
 async function renderReviews(r) {
-  const saved = await BiteServices.reviews.getReviews(r.id);
-  const base = (r.reviews || []).map(text => ({ author:'BITE student', text }));
-  document.getElementById('reviewList').innerHTML = [...saved, ...base].map(x => `<div class="review-item"><div class="review-author">${x.author}</div><div class="review-text">${x.text}</div></div>`).join('');
+  const reviews = await BiteServices.reviews.getReviews(r.id);
+  const list = document.getElementById('reviewList');
+  if (!reviews.length) {
+    list.innerHTML = '<div class="empty-state" style="padding:14px;font-size:13px;">No reviews yet. Be the first to write one!</div>';
+    return;
+  }
+  list.innerHTML = reviews.map(rev => {
+    const stars = rev.rating ? '★'.repeat(rev.rating) + '☆'.repeat(5 - rev.rating) : '';
+    const timeAgo = rev.created_at ? getTimeAgo(rev.created_at) : '';
+    const replies = rev.replies || [];
+    const replyCountText = replies.length ? `${replies.length} ${replies.length === 1 ? 'reply' : 'replies'}` : '';
+    const repliesHtml = replies.length ? `
+      <div class="reply-thread">
+        ${replies.map(rep => {
+          const repTime = rep.created_at ? getTimeAgo(rep.created_at) : '';
+          return `<div class="reply-item">
+            <div class="reply-header">
+              <span class="reply-author">${rep.author || 'Anonymous'}</span>
+              <span class="reply-time">${repTime}</span>
+            </div>
+            <div class="reply-text">${escapeHtml(rep.text || rep.comment || '')}</div>
+          </div>`;
+        }).join('')}
+      </div>` : '';
+    return `<div class="review-item" data-review-id="${rev._id || ''}">
+      <div class="review-header">
+        <span class="review-author">${rev.author || 'Anonymous'}</span>
+        ${stars ? `<span class="review-stars">${stars}</span>` : ''}
+        <span class="review-time">${timeAgo}</span>
+      </div>
+      <div class="review-text">${escapeHtml(rev.text || rev.comment || '')}</div>
+      <div class="review-actions">
+        <button class="reply-btn" onclick="toggleReplyForm('${rev._id || ''}')">↩ Reply</button>
+        ${replyCountText ? `<span class="reply-count">· ${replyCountText}</span>` : ''}
+      </div>
+      <div class="reply-form-container" id="replyForm-${rev._id || ''}" style="display:none;">
+        <div class="reply-form">
+          <textarea class="reply-input" id="replyInput-${rev._id || ''}" placeholder="Write a reply..."></textarea>
+          <button class="reply-submit" onclick="submitReply('${rev._id || ''}')">Post</button>
+        </div>
+      </div>
+      ${repliesHtml}
+    </div>`;
+  }).join('');
+}
+
+// Helper to escape user-generated text
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function toggleReplyForm(reviewId) {
+  if (!isAuthed) {
+    showToast('Sign in to reply');
+    return;
+  }
+  const form = document.getElementById(`replyForm-${reviewId}`);
+  if (!form) return;
+  const isOpen = form.style.display !== 'none';
+  // Close all other open reply forms
+  document.querySelectorAll('.reply-form-container').forEach(f => f.style.display = 'none');
+  if (!isOpen) {
+    form.style.display = 'block';
+    document.getElementById(`replyInput-${reviewId}`)?.focus();
+  }
+}
+
+async function submitReply(reviewId) {
+  if (!reviewId) return;
+  const input = document.getElementById(`replyInput-${reviewId}`);
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return showToast('Write something first');
+  try {
+    const res = await fetch(`/api/reviews/${reviewId}/reply`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        author: authState.user?.name || 'Guest',
+        comment: text,
+        school
+      })
+    });
+    if (!res.ok) throw new Error('Reply failed');
+    input.value = '';
+    showToast('Reply posted');
+    // Refresh the reviews
+    if (activeId) {
+      const r = findRestaurant(activeId);
+      if (r) await renderReviews(r);
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Could not post reply');
+  }
 }
 
 async function requestLocation() {

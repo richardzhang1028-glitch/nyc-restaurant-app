@@ -10,24 +10,43 @@ const reviewSchema = new mongoose.Schema({
         required: true
     },
     author: { type: String, default: 'Anonymous' },
-    rating: { type: Number, required: true, min: 1, max: 5 },
+    rating: { type: Number, min: 1, max: 5 },  // optional now (replies don't have ratings)
     comment: { type: String, required: true },
     school: { type: String },
+    parent_review_id: {                          // NEW: if set, this is a reply
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Review',
+        default: null
+    },
     created_at: { type: Date, default: Date.now }
 });
 
 const Review = mongoose.model('Review', reviewSchema);
 
 // ── GET /api/reviews/:restaurant_id ─────────────────
-// 获取某餐厅的所有评价
+// Returns top-level reviews with their replies nested in.
 router.get('/:restaurant_id', async (req, res) => {
     try {
-        const reviews = await Review.find({
-            restaurant_id: req.params.restaurant_id
-        }).sort({ created_at: -1 }); // 最新的在前
+        // Get top-level reviews (parent_review_id is null)
+        const topLevel = await Review.find({
+            restaurant_id: req.params.restaurant_id,
+            parent_review_id: null
+        }).sort({ created_at: -1 });
 
-        res.json(reviews);
+        // Get all replies for this restaurant
+        const replies = await Review.find({
+            restaurant_id: req.params.restaurant_id,
+            parent_review_id: { $ne: null }
+        }).sort({ created_at: 1 });  // oldest first for thread reading order
 
+        // Attach replies to their parent reviews
+        const result = topLevel.map(rev => {
+            const revObj = rev.toObject();
+            revObj.replies = replies.filter(rep => String(rep.parent_review_id) === String(rev._id));
+            return revObj;
+        });
+
+        res.json(result);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to fetch reviews' });
@@ -35,19 +54,17 @@ router.get('/:restaurant_id', async (req, res) => {
 });
 
 // ── POST /api/reviews ───────────────────────────────
-// 提交新评价
+// Create a new top-level review (with rating).
 router.post('/', async (req, res) => {
     try {
         const { restaurant_id, author, rating, comment, school } = req.body;
 
-        // 验证必填字段
         if (!restaurant_id || !rating || !comment) {
             return res.status(400).json({
                 error: 'restaurant_id, rating and comment are required'
             });
         }
 
-        // 验证评分范围
         if (rating < 1 || rating > 5) {
             return res.status(400).json({
                 error: 'Rating must be between 1 and 5'
@@ -59,28 +76,59 @@ router.post('/', async (req, res) => {
             author: author || 'Anonymous',
             rating: Number(rating),
             comment,
-            school
+            school,
+            parent_review_id: null
         });
 
         await review.save();
         res.status(201).json(review);
-
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to save review' });
     }
 });
 
+// ── POST /api/reviews/:reviewId/reply ───────────────
+// Create a reply to an existing review.
+router.post('/:reviewId/reply', async (req, res) => {
+    try {
+        const { author, comment, school } = req.body;
+        if (!comment) {
+            return res.status(400).json({ error: 'comment is required' });
+        }
+
+        // Find the parent to get the restaurant_id
+        const parent = await Review.findById(req.params.reviewId);
+        if (!parent) {
+            return res.status(404).json({ error: 'Parent review not found' });
+        }
+
+        const reply = new Review({
+            restaurant_id: parent.restaurant_id,
+            author: author || 'Anonymous',
+            comment,
+            school: school || parent.school,
+            parent_review_id: parent._id
+        });
+
+        await reply.save();
+        res.status(201).json(reply);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to save reply' });
+    }
+});
+
 // ── DELETE /api/reviews/:id ─────────────────────────
-// 删除评价
 router.delete('/:id', async (req, res) => {
     try {
         const review = await Review.findByIdAndDelete(req.params.id);
         if (!review) {
             return res.status(404).json({ error: 'Review not found' });
         }
+        // Also delete its replies
+        await Review.deleteMany({ parent_review_id: req.params.id });
         res.json({ message: 'Review deleted' });
-
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to delete review' });
