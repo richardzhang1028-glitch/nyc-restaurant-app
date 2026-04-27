@@ -1216,8 +1216,6 @@ body.view-detail .detail-nav-btn.next { transform:translateY(-50%) translateX(0)
         </div>
         <div class="detail-section detail-goodfor"><div class="detail-section-label">Good for</div><div class="detail-tags" id="dGoodFor"></div></div>
         <div class="detail-section detail-neighborhood"><div class="detail-section-label">Neighborhood</div><div class="detail-desc" id="dNeighborhood"></div></div>
-        <div class="detail-section detail-about"><div class="detail-section-label">About</div><div class="detail-desc" id="dDesc"></div></div>
-        <div class="detail-section detail-tags-block"><div class="detail-section-label">Tags</div><div class="detail-tags" id="dTags"></div></div>
         <div class="detail-section detail-address"><div class="detail-section-label">Address</div><div class="address-line" id="dAddress"></div></div>
         <div class="detail-section detail-checkins">
           <div class="detail-section-label">Recent Check-ins</div>
@@ -1314,7 +1312,7 @@ const SCHOOL_FOCUS = {
 };
 const GUEST_THEME = { primary:'#555555', tint:'rgba(85,85,85,0.08)', mid:'rgba(85,85,85,0.18)' };
 const MOOD_TAG = { quick:'🍕 Casual', upscale:'✨ Upscale', healthy:'🥗 Healthy', study:'☕ Study-Friendly', nearby:'📍 Nearby' };
-const GOOD_FOR = { cheap:'Budget-friendly', latenight:'Late Night', study:'Study Spots', healthy:'Healthy', toprated:'Top Rated' };
+const GOOD_FOR = { healthy:'Healthy', study:'Study-Friendly', upscale:'Upscale' };
 const ALL_RESTAURANTS = {
   columbia:[
     {id:1,name:'Koronet Pizza',category:'Pizza',price:'$',rating:4.3,dist:'0.1 mi',lat:40.8044,lng:-73.9645,tags:['cheap','latenight'],moods:['quick','latenight'],neighborhood:'Morningside Heights',address:'2848 Broadway, New York, NY 10025',hero:'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1200&q=80',desc:'Famous for enormous NYC slices. Open until 4AM, the ultimate post-library stop.',reviews:['The slice is bigger than my laptop. Exactly what I need after Butler.','Fast, cheap, and always there late.']},
@@ -1414,26 +1412,25 @@ const BiteServices = (() => {
         const cuisineLower = cuisine.toLowerCase();
         const combined = cuisineLower + ' ' + nameLower;
         const tags = [];
-        if (doc.rating >= 4.5) tags.push('toprated');
-        if (price === '$') tags.push('cheap');
-        if (/pizza|burger|taco|falafel|bagel|noodle|dumpling|wing|sandwich|wrap/i.test(combined)) tags.push('quickbite');
+        if (price === '$$$' || price === '$$$$' || /italian|french|japanese|sushi|steakhouse|seafood|wine|bistro|tapas/i.test(combined)) tags.push('upscale');
+        if (/salad|juice|vegan|vegetarian|organic|poke|acai|smoothie|health|bowl|farm/i.test(combined)) tags.push('healthy');
         if (/cafe|café|coffee|bakery|tea|brunch|pastry|starbucks/i.test(combined)) tags.push('study');
-        if (/salad|juice|vegan|vegetarian|organic|poke|acai|smoothie|health|bowl/i.test(combined)) tags.push('healthy');
-        if (/pizza|bar|pub|diner|grill|burger|wing|taco|karaoke|lounge/i.test(combined)) tags.push('latenight');
-        if (price === '$$$' || price === '$$$$' || /italian|french|japanese|sushi|steakhouse|seafood|wine|bistro|tapas/i.test(combined)) tags.push('datespot');
+        if (price === '$' || /pizza|burger|taco|falafel|bagel|noodle|dumpling|wing|sandwich|wrap|deli/i.test(combined)) tags.push('quickbite');
+        // Catch-all: if nothing matched, default to Casual
+        if (!tags.length) tags.push('quickbite');
         // Limit to 3 most relevant tags
         tags.splice(3);
         const moods = [];
-        // Casual: cheap, fast, grab-and-go
-        if (price === '$' || /pizza|burger|taco|falafel|bagel|deli|fast|noodle|dumpling|wing|sandwich|wrap|hot dog/i.test(combined)) moods.push('quick');
         // Upscale: expensive, fine dining
         if (price === '$$$' || price === '$$$$' || /italian|french|japanese|sushi|steakhouse|seafood|wine|bistro|tapas/i.test(combined)) moods.push('upscale');
         // Healthy: salads, juice, vegan, poke
-        if (/salad|juice|vegan|vegetarian|organic|poke|acai|smoothie|health|green|bowl|grain/i.test(combined)) moods.push('healthy');
+        if (/salad|juice|vegan|vegetarian|organic|poke|acai|smoothie|health|green|bowl|grain|farm/i.test(combined)) moods.push('healthy');
         // Study-Friendly: cafes, coffee shops, bakeries, quiet places
-        if (/cafe|café|coffee|bakery|tea|brunch|pastry|library|bookstore|starbucks|deli/i.test(combined)) moods.push('study');
-        // Fallback
-        if (!moods.length && price === '$') moods.push('quick');
+        if (/cafe|café|coffee|bakery|tea|brunch|pastry|library|bookstore|starbucks/i.test(combined)) moods.push('study');
+        // Casual: explicitly matches grab-and-go food
+        if (price === '$' || /pizza|burger|taco|falafel|bagel|deli|fast|noodle|dumpling|wing|sandwich|wrap|hot dog/i.test(combined)) moods.push('quick');
+        // Catch-all fallback: if nothing else matched, it's Casual
+        if (!moods.length) moods.push('quick');
         return {
           id: idx + 1,
           _id: doc._id,                              // MongoDB ObjectId, needed for favourites/reviews                              // numeric id for frontend code
@@ -1450,7 +1447,7 @@ const BiteServices = (() => {
           neighborhood: doc.school === 'columbia' ? 'Morningside Heights' : 'Greenwich Village',
           address: doc.address || '',
           hero: doc.photo_url || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80',
-          desc: `${cuisine} restaurant in ${doc.school === 'columbia' ? 'Morningside Heights' : 'Greenwich Village'}.`,
+          desc: '',
           reviews: [],
           school: doc.school
         };
@@ -2194,7 +2191,7 @@ async function buildList() {
   updateMarkers(currentRests);
 }
 function tagLabel(t) {
-  return { cheap:'$ Budget', toprated:'Top Rated', quickbite:'Quick Bite', study:'Study Spot', healthy:'Healthy', latenight:'Late Night', datespot:'Date Spot' }[t] || t;
+  return { quickbite:'Casual', study:'Study-Friendly', healthy:'Healthy', upscale:'Upscale' }[t] || null;
 }
 function findRestaurant(id) {
   // Use the live backend data if available; fall back to the hardcoded list
@@ -2337,10 +2334,12 @@ async function openDetail(r) {
   document.getElementById('dPrice').textContent = r.price;
   document.getElementById('dDist').textContent = getDistanceLabel(r);
   selectedRestaurant = r;
-  document.getElementById('dGoodFor').innerHTML = Array.from(new Set([...r.moods.map(m => MOOD_TAG[m]), ...r.tags.map(t => GOOD_FOR[t] || tagLabel(t))])).slice(0, 6).map(t => `<span class="detail-tag">${t}</span>`).join('');
+  // Build Good For list from moods (with emojis), filtering out null/empty
+  const goodForLabels = Array.from(new Set(
+    r.moods.map(m => MOOD_TAG[m])
+  )).filter(Boolean).slice(0, 6);
+  document.getElementById('dGoodFor').innerHTML = goodForLabels.map(t => `<span class="detail-tag">${t}</span>`).join('');
   document.getElementById('dNeighborhood').textContent = r.neighborhood;
-  document.getElementById('dDesc').textContent = r.desc;
-  document.getElementById('dTags').innerHTML = r.tags.map(t => `<span class="detail-tag">${tagLabel(t)}</span>`).join('');
   document.getElementById('dAddress').textContent = r.address;
   document.getElementById('reviewInput').value = '';
   currentReviewRating = 5;
