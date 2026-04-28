@@ -1,8 +1,8 @@
 # 🍽️ BITE NYC
 
-A restaurant discovery platform for NYC students — focused on Columbia and NYU. Course term project.
+A restaurant discovery platform for NYC university students — focused on Columbia and NYU. Course term project for APAN 5490.
 
-> **Tech stack:** HTML / CSS / JavaScript · Node.js + Express · MongoDB (Mongoose) · Leaflet
+> **Tech stack:** HTML / CSS / JavaScript · Node.js + Express · MongoDB (Mongoose) · Leaflet · Google Places API
 
 ---
 
@@ -11,9 +11,9 @@ A restaurant discovery platform for NYC students — focused on Columbia and NYU
 ### 1. Prerequisites
 
 - **Node.js** (v18+)
-- **MongoDB** (running locally)
+- **MongoDB** running locally
   - Mac install:
-    ```bash
+    ```
     brew tap mongodb/brew
     brew install mongodb-community@7.0
     brew services start mongodb-community@7.0
@@ -22,14 +22,14 @@ A restaurant discovery platform for NYC students — focused on Columbia and NYU
 
 ### 2. Clone the repo
 
-```bash
+```
 git clone https://github.com/richardzhang1028-glitch/nyc-restaurant-app.git
 cd nyc-restaurant-app
 ```
 
 ### 3. Install dependencies
 
-```bash
+```
 npm install
 ```
 
@@ -42,16 +42,26 @@ MONGODB_URI=mongodb://localhost:27017/bitenyc
 PORT=3000
 ```
 
-### 5. Seed the database
+### 5. Seed the database (in this order)
 
-```bash
-node data/seed.js                    # 1067 restaurants + 10 deals
-node data/seed_users_checkins.js     # 15 users + 120 check-ins
 ```
+node data/seed.js
+node data/seed_users_checkins.js
+node data/seed_realistic_checkins.js
+node data/seed_reviews.js
+node data/seed_replies.js
+```
+
+What each does:
+- `seed.js` — 1067 restaurants + 10 deals
+- `seed_users_checkins.js` — 15 users + 120 base check-ins
+- `seed_realistic_checkins.js` — replaces with realistic check-ins (30-80 per user)
+- `seed_reviews.js` — generates reviews and check-ins for reviewers
+- `seed_replies.js` — generates reply threads on reviews
 
 ### 6. Start the server
 
-```bash
+```
 node server.js
 ```
 
@@ -63,8 +73,8 @@ Open **http://localhost:3000** in your browser.
 
 | Email | School | Notes |
 |-------|--------|-------|
-| `emma@columbia.edu` | Columbia | #1 on leaderboard, 12 check-ins, friends with Ryan & Sophia |
-| `maya@nyu.edu` | NYU | NYU top user, 11 check-ins |
+| `emma@columbia.edu` | Columbia | Friends with Ryan Park and Sophia Li |
+| `maya@nyu.edu` | NYU | NYU demo user |
 | Any `@columbia.edu` or `@nyu.edu` email | — | Auto-registers as a new user |
 
 ---
@@ -73,29 +83,32 @@ Open **http://localhost:3000** in your browser.
 
 ```
 nyc-restaurant-app/
-├── data/                          # Data files + seed scripts
-│   ├── restaurants.json           # 1067 restaurants (Person 3)
-│   ├── deals.json                 # 10 deals (Person 3)
-│   ├── users.json                 # 15 users (Person 4)
-│   ├── checkins.json              # 120 check-ins (Person 4)
-│   ├── seed.js                    # Seeds restaurants + deals
-│   └── seed_users_checkins.js     # Seeds users + check-ins
-├── public/                        # Frontend static files (served by Express)
-│   ├── index.html                 # Login + main dashboard
-│   ├── leaderboard.html           # Social page (Leaderboard + Friends tabs)
-│   └── styles.css                 # Global styles
-├── server/                        # Backend code
-│   ├── db.js                      # MongoDB connection
-│   └── routes/                    # API routes (one file per resource)
+├── data/                              # Data files + seed scripts
+│   ├── restaurants.json               # 1067 restaurants (from Google Places API)
+│   ├── deals.json                     # 10 student deals
+│   ├── users.json                     # 15 mock users (Columbia + NYU)
+│   ├── checkins.json                  # 120 base check-ins
+│   ├── seed.js                        # Seeds restaurants + deals
+│   ├── seed_users_checkins.js         # Seeds users + base check-ins
+│   ├── seed_realistic_checkins.js     # Replaces with realistic check-ins
+│   ├── seed_reviews.js                # Seeds reviews (and check-ins for reviewers)
+│   ├── seed_replies.js                # Seeds reply threads on reviews
+│   └── fetch_restaurants.js           # Utility to re-pull restaurants from Google Places
+├── public/
+│   └── index.html                     # Single-page app (HTML + CSS + JS)
+├── server/                            # Backend code
+│   ├── db.js                          # MongoDB connection
+│   └── routes/                        # API routes
 │       ├── restaurants.js
 │       ├── reviews.js
 │       ├── favourites.js
 │       ├── deals.js
-│       ├── users.js               # Users + friends
+│       ├── users.js                   # Users + friends
 │       ├── checkins.js
 │       └── leaderboard.js
-├── server.js                      # Express entry point
-└── package.json
+├── server.js                          # Express entry point
+├── package.json
+└── README.md
 ```
 
 ---
@@ -119,16 +132,32 @@ All endpoints are prefixed with `/api` and return JSON.
 ### Check-ins
 - `POST /api/checkins` — create `{ user_id, restaurant_place_id, restaurant_name, school }`
 - `GET /api/checkins?user_id=&school=` — list check-ins
+- `GET /api/checkins/user/:userId` — all check-ins for a user
+- `GET /api/checkins/restaurant/:place_id` — all check-ins at a restaurant (joined with user info)
+
+### Reviews
+- `GET /api/reviews/:restaurant_id` — top-level reviews with replies nested
+- `POST /api/reviews` — create review `{ restaurant_id, author, rating, comment, school }`
+- `POST /api/reviews/:reviewId/reply` — reply to a review `{ author, comment, school }`
+- `DELETE /api/reviews/:id` — delete a review (also deletes its replies)
+
+### Favourites
+- `GET /api/favourites?user_id=` — get user's favourites
+- `POST /api/favourites` — add favourite
+- `DELETE /api/favourites/:user_id/:restaurant_id` — remove favourite
 
 ### Leaderboard
 - `GET /api/leaderboard?school=&limit=` — top users by check-in count
 - `GET /api/leaderboard/restaurants?school=&limit=` — top restaurants by check-in count
 
+### Deals
+- `GET /api/deals?school=` — list active deals
+
 ---
 
 ## 🗄️ Database schema
 
-```js
+```
 // User
 { id, name, email, school, theme, friends: [Number] }
 
@@ -136,45 +165,65 @@ All endpoints are prefixed with `/api` and return JSON.
 { user_id, restaurant_place_id, restaurant_name, school, checkin_time }
 
 // Restaurant
-{ place_id, name, lat, lng, address, rating, price, cuisine, school, ... }
+{ place_id, name, lat, lng, address, rating, price, cuisine, photo_url, school, ... }
+
+// Review (replies use the same schema with parent_review_id set)
+{ restaurant_id, author, rating, comment, school, parent_review_id, created_at }
+
+// Favourite
+{ user_id, restaurant_id, restaurant_name, ... }
 ```
 
 ---
 
 ## ✨ Core features
 
-- Login / auto-register (school detected from email domain)
-- Restaurant search + filtering (by type and price)
-- Leaflet map with list-map sync
-- Restaurant detail panel with hero images, reviews, and check-in
-- Star rating system for user reviews
-- User-scoped favourites with multiple lists
-- Social page: Leaderboard (students + restaurants) + Friends (add / remove / search)
-- School theming (Columbia blue / NYU purple)
-- Geolocation for distance calculation
+- **Browse-first auth** — explore without signing in; auto-register on `.edu` email login
+- **School theming** — Columbia blue or NYU purple, applied dynamically based on email domain
+- **Restaurant discovery** — search, multi-select filters (Casual / Study-Friendly / Healthy / Upscale), price filter, Nearby filter using geolocation
+- **Interactive map** — Leaflet map with school-aware focus and clickable markers
+- **Restaurant detail page** — photos, ratings, reviews with reply threads, recent check-ins, get directions
+- **Check-ins** — one-tap check-in to track visits (one per user per restaurant)
+- **Reviews + replies** — 1-5 star ratings, written reviews, threaded replies
+- **User-scoped favourites** — saved across devices, organized by category
+- **Social tab** — leaderboard (students + restaurants), friends list with activity feed
+- **Real-time leaderboard** — MongoDB aggregation recomputes rankings on every load
+- **Mobile responsive** — works on desktop, tablet, and mobile viewports
 
 ---
 
-## 👥 Team roles
+## 👥 Team
 
-| Role | Responsibilities |
-|------|-----------------|
-| Person 1 | Frontend UI & Theme |
-| Person 2 | Map & Restaurant Interaction |
-| Person 3 | Backend & Database |
-| Person 4 | Deals / Events / Leaderboard Data |
-| Person 5 | Social Features & Testing |
+| Name | Role |
+|------|------|
+| Suxin Liang | Frontend UI & Theme Design |
+| Jim Ye | Map & Restaurant Interaction |
+| Richard Zhang | Backend & Database Architecture |
+| Yuqi Cheng | Data Engineering & Seed Data |
+| Jiayi Hao | Social Features, Integration & Testing |
 
 ---
 
 ## 🧪 Reset database to fresh state
 
-```bash
-node data/seed.js                    # restaurants + deals
-node data/seed_users_checkins.js     # users + check-ins
+Run the full seed pipeline:
+
+```
+node data/seed.js
+node data/seed_users_checkins.js
+node data/seed_realistic_checkins.js
+node data/seed_reviews.js
+node data/seed_replies.js
 ```
 
-To also clear favourites and reviews:
-```bash
-mongosh bitenyc --eval "db.favourites.deleteMany({}); db.reviews.deleteMany({})"
+To also clear favourites manually:
+
 ```
+mongosh bitenyc --eval "db.favourites.deleteMany({})"
+```
+
+---
+
+## 📚 Course
+
+APAN 5490 — Columbia University · Spring 2026
