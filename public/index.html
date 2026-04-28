@@ -150,12 +150,14 @@ body.is-auth .nav-avatar { display:flex; }
 .map-stage { position:fixed; inset:0; z-index:1; background:var(--bg); pointer-events:all; }
 #map { width:100%; height:100%; pointer-events:auto; transition:filter .6s var(--ease), opacity .6s var(--ease); }
 body.view-home #map { opacity:0; }
+body.view-social #map { opacity:0; }
 body.view-favourites #map { filter:none; opacity:1; }
 body.view-detail #map { filter:none; opacity:1; }
 body.view-login #map { filter:grayscale(1) blur(3px); opacity:.28; }
 
-/* Solid background for Discover view */
-body.view-home .map-stage::before {
+/* Solid background for Discover and Social views */
+body.view-home .map-stage::before,
+body.view-social .map-stage::before {
   content:'';
   position:absolute;
   inset:0;
@@ -2846,7 +2848,49 @@ async function loadSocialLeaderboard() {
   const auth = JSON.parse(localStorage.getItem('biteNYC.auth') || '{}');
   const myId = auth.user?.id;
 
-  // If "Friends" scope, fetch friends list first
+  // ─── Special case: Friends scope + Restaurants type ───
+  // Compute "where my friends eat" from their check-ins (no backend support yet)
+  if (socialScope === 'friends' && socialType === 'restaurants') {
+    if (!auth.isAuthed || !myId) {
+      list.innerHTML = '<div class="social-empty">Sign in to see your friends\' favorite spots.</div>';
+      return;
+    }
+    try {
+      // Get friends list, then their check-ins
+      const fRes = await fetch(`/api/users/${myId}/friends`);
+      const friends = await fRes.json();
+      const userIds = [myId, ...friends.map(f => f.id)];
+
+      // Fetch all check-ins from each user in parallel
+      const checkinResults = await Promise.all(
+        userIds.map(id => fetch(`/api/checkins/user/${id}`).then(r => r.ok ? r.json() : []).catch(() => []))
+      );
+      const allCheckins = checkinResults.flat();
+
+      if (!allCheckins.length) {
+        list.innerHTML = '<div class="social-empty">No check-ins from you or your friends yet.</div>';
+        return;
+      }
+
+      // Aggregate by restaurant
+      const counts = {};
+      allCheckins.forEach(c => {
+        const key = c.restaurant_place_id;
+        if (!counts[key]) counts[key] = { restaurant_name: c.restaurant_name, school: c.school, checkin_count: 0 };
+        counts[key].checkin_count++;
+      });
+      const data = Object.values(counts).sort((a, b) => b.checkin_count - a.checkin_count).slice(0, 20);
+
+      renderRestaurantLeaderboard(data, list);
+      return;
+    } catch (err) {
+      console.error(err);
+      list.innerHTML = '<div class="social-empty">Couldn\'t load friends\' favorites.</div>';
+      return;
+    }
+  }
+
+  // ─── Friends scope + Students type: existing logic ───
   let friendIds = null;
   if (socialScope === 'friends') {
     if (!auth.isAuthed || !myId) {
@@ -2857,21 +2901,23 @@ async function loadSocialLeaderboard() {
       const fRes = await fetch(`/api/users/${myId}/friends`);
       const friends = await fRes.json();
       friendIds = new Set(friends.map(f => f.id));
-      friendIds.add(myId); // include yourself in friends leaderboard
+      friendIds.add(myId);
     } catch (err) {
       list.innerHTML = '<div class="social-empty">Couldn\'t load friends.</div>';
       return;
     }
   }
 
+  // ─── Standard leaderboard fetch (Mine / All scopes, or Friends-Students) ───
+  // When filtering for friends, request more results so we don't cut off friends ranked > 10
+  const limit = socialScope === 'friends' ? 100 : 20;
   const url = socialType === 'users'
-    ? `/api/leaderboard${socialScope === 'mine' ? `?school=${school}` : ''}`
-    : `/api/leaderboard/restaurants${socialScope === 'mine' ? `?school=${school}` : ''}`;
+    ? `/api/leaderboard?limit=${limit}${socialScope === 'mine' ? `&school=${school}` : ''}`
+    : `/api/leaderboard/restaurants?limit=${limit}${socialScope === 'mine' ? `&school=${school}` : ''}`;
   try {
     const res = await fetch(url);
     let data = await res.json();
 
-    // Filter to friends only if in friends scope
     if (socialScope === 'friends' && friendIds && socialType === 'users') {
       data = data.filter(row => friendIds.has(row.user_id));
     }
@@ -2882,45 +2928,67 @@ async function loadSocialLeaderboard() {
         : '<div class="social-empty">No data yet — go check in somewhere!</div>';
       return;
     }
-    const maxCount = data[0].checkin_count || 1;
-    const medalEmojis = ['🥇', '🥈', '🥉'];
-    const schoolColors = {
-      columbia: { bar:'rgba(26,107,181,0.12)', avatar:'rgba(26,107,181,0.12)', text:'#1A6BB5' },
-      nyu: { bar:'rgba(139,29,181,0.12)', avatar:'rgba(139,29,181,0.12)', text:'#8B1DB5' }
-    };
-    const defaultColors = schoolColors.columbia;
-    list.innerHTML = data.map((row, i) => {
-      const barWidth = Math.round((row.checkin_count / maxCount) * 100);
-      const medalHtml = i < 3 ? `<span class="social-medal">${medalEmojis[i]}</span>` : '';
-      const sc = row.school || 'columbia';
-      const colors = schoolColors[sc] || defaultColors;
-      if (socialType === 'users') {
-        const letter = (row.name || '?').charAt(0).toUpperCase();
-        const isMe = row.user_id === myId;
-        return `<div class="social-row">
-          <div class="social-bar" style="width:${barWidth}%;background:${colors.bar}"></div>
-          <div class="social-rank">${i + 1}</div>
-          <div class="social-avatar" style="background:${colors.avatar};color:${colors.text}">${letter}</div>
-          <div class="social-name">${row.name || 'Unknown'}${medalHtml}${isMe ? '<span class="social-you">You</span>' : ''}<span class="social-school">${sc}</span></div>
-          <div class="social-score"><span class="social-count" style="color:${colors.text}">${row.checkin_count}</span><span class="social-count-label">check-ins</span></div>
-        </div>`;
-      } else {
-        const all = window.BITE_RESTAURANTS ? Object.values(window.BITE_RESTAURANTS).flat() : [];
-        const match = all.find(r => r.name === row.restaurant_name);
-        const hasImg = match && match.hero && !match.hero.includes('unsplash.com/photo-1555396273');
-        return `<div class="social-row">
-          <div class="social-bar" style="width:${barWidth}%;background:${colors.bar}"></div>
-          <div class="social-rank">${i + 1}</div>
-          <div class="social-avatar" style="${hasImg ? `background-image:url('${match.hero}');background-size:cover;background-position:center;` : `background:${colors.avatar};color:${colors.text}`}">${hasImg ? '' : '🍽️'}</div>
-          <div class="social-name">${row.restaurant_name || 'Unknown'}${medalHtml}<span class="social-school">${sc}</span></div>
-          <div class="social-score"><span class="social-count" style="color:${colors.text}">${row.checkin_count}</span><span class="social-count-label">visits</span></div>
-        </div>`;
-      }
-    }).join('');
+
+    if (socialType === 'users') {
+      renderStudentLeaderboard(data, list, myId);
+    } else {
+      renderRestaurantLeaderboard(data, list);
+    }
   } catch (err) {
     console.error(err);
     list.innerHTML = '<div class="social-empty">Couldn\'t load leaderboard.</div>';
   }
+}
+
+// ─── Helpers ──────────────────────────────────────────
+function renderStudentLeaderboard(data, list, myId) {
+  const maxCount = data[0].checkin_count || 1;
+  const medalEmojis = ['🥇', '🥈', '🥉'];
+  const schoolColors = {
+    columbia: { bar:'rgba(26,107,181,0.12)', avatar:'rgba(26,107,181,0.12)', text:'#1A6BB5' },
+    nyu: { bar:'rgba(139,29,181,0.12)', avatar:'rgba(139,29,181,0.12)', text:'#8B1DB5' }
+  };
+  list.innerHTML = data.map((row, i) => {
+    const barWidth = Math.round((row.checkin_count / maxCount) * 100);
+    const medalHtml = i < 3 ? `<span class="social-medal">${medalEmojis[i]}</span>` : '';
+    const sc = row.school || 'columbia';
+    const colors = schoolColors[sc] || schoolColors.columbia;
+    const letter = (row.name || '?').charAt(0).toUpperCase();
+    const isMe = row.user_id === myId;
+    return `<div class="social-row">
+      <div class="social-bar" style="width:${barWidth}%;background:${colors.bar}"></div>
+      <div class="social-rank">${i + 1}</div>
+      <div class="social-avatar" style="background:${colors.avatar};color:${colors.text}">${letter}</div>
+      <div class="social-name">${row.name || 'Unknown'}${medalHtml}${isMe ? '<span class="social-you">You</span>' : ''}<span class="social-school">${sc}</span></div>
+      <div class="social-score"><span class="social-count" style="color:${colors.text}">${row.checkin_count}</span><span class="social-count-label">check-ins</span></div>
+    </div>`;
+  }).join('');
+}
+
+function renderRestaurantLeaderboard(data, list) {
+  const maxCount = data[0].checkin_count || 1;
+  const medalEmojis = ['🥇', '🥈', '🥉'];
+  const schoolColors = {
+    columbia: { bar:'rgba(26,107,181,0.12)', avatar:'rgba(26,107,181,0.12)', text:'#1A6BB5' },
+    nyu: { bar:'rgba(139,29,181,0.12)', avatar:'rgba(139,29,181,0.12)', text:'#8B1DB5' }
+  };
+  const all = window.BITE_RESTAURANTS ? Object.values(window.BITE_RESTAURANTS).flat() : [];
+  list.innerHTML = data.map((row, i) => {
+    const barWidth = Math.round((row.checkin_count / maxCount) * 100);
+    const medalHtml = i < 3 ? `<span class="social-medal">${medalEmojis[i]}</span>` : '';
+    const sc = row.school || 'columbia';
+    const colors = schoolColors[sc] || schoolColors.columbia;
+    const match = all.find(r => r.name === row.restaurant_name);
+    const hasImg = match && match.hero && !match.hero.includes('unsplash.com/photo-1555396273');
+    const clickable = match ? `onclick="selectRestaurant(${match.id})" style="cursor:pointer;"` : '';
+    return `<div class="social-row" ${clickable}>
+      <div class="social-bar" style="width:${barWidth}%;background:${colors.bar}"></div>
+      <div class="social-rank">${i + 1}</div>
+      <div class="social-avatar" style="${hasImg ? `background-image:url('${match.hero}');background-size:cover;background-position:center;` : `background:${colors.avatar};color:${colors.text}`}">${hasImg ? '' : '🍽️'}</div>
+      <div class="social-name">${row.restaurant_name || 'Unknown'}${medalHtml}<span class="social-school">${sc}</span></div>
+      <div class="social-score"><span class="social-count" style="color:${colors.text}">${row.checkin_count}</span><span class="social-count-label">visits</span></div>
+    </div>`;
+  }).join('');
 }
 async function loadSocialFriends() {
   const list = document.getElementById('socialFrList');
