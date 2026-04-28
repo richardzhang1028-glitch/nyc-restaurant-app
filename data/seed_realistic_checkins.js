@@ -141,8 +141,19 @@ async function seed() {
       }
     }
 
-    console.log(`   ✅ Inserting ${newCheckins.length} check-ins...`);
-    await Checkin.insertMany(newCheckins);
+    // Dedupe: one check-in per (user, restaurant) — keep the most recent
+    const seen = new Map();
+    for (const c of newCheckins) {
+      const key = `${c.user_id}|${c.restaurant_place_id}`;
+      const existing = seen.get(key);
+      if (!existing || c.checkin_time > existing.checkin_time) {
+        seen.set(key, c);
+      }
+    }
+    const dedupedCheckins = Array.from(seen.values());
+
+    console.log(`   ✅ Inserting ${dedupedCheckins.length} check-ins (deduped from ${newCheckins.length})...`);
+    await Checkin.insertMany(dedupedCheckins);
 
     // ─── Stats ───
     console.log('\n📊 Summary:');

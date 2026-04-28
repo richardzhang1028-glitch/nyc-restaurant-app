@@ -1,26 +1,13 @@
-// ── seed_more_checkins_and_replies.js ─────────────────────
-// Adds more mock check-ins (so most restaurants have some) and
-// generates mock replies on ~30% of existing reviews.
-// Run with:  node data/seed_more_checkins_and_replies.js
-// Safe to re-run.
+// ── seed_replies.js ─────────────────────────────────
+// Generates mock replies on ~30% of existing reviews.
+// Run with:  node data/seed_replies.js
+// Safe to re-run: clears existing replies first.
 
 require('dotenv').config();
 const mongoose = require('mongoose');
 const users = require('./users.json');
 
 // ── Schemas ─────────────────────────────────────────
-const restaurantSchema = new mongoose.Schema({}, { strict: false });
-const Restaurant = mongoose.model('Restaurant', restaurantSchema);
-
-const checkinSchema = new mongoose.Schema({
-  user_id: { type: Number, required: true },
-  restaurant_place_id: { type: String, required: true },
-  restaurant_name: String,
-  school: String,
-  checkin_time: { type: Date, default: Date.now }
-});
-const Checkin = mongoose.model('Checkin', checkinSchema);
-
 const reviewSchema = new mongoose.Schema({
   restaurant_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant', required: true },
   author: { type: String, default: 'Anonymous' },
@@ -82,75 +69,12 @@ function pickReplyType() {
   return 'disagree';
 }
 
-// Pick how many extra check-ins this restaurant gets
-function pickExtraCheckins(rating) {
-  const r = rating || 3.8;
-  const roll = Math.random();
-  if (r >= 4.5) {
-    // Popular: 0-3 extra
-    if (roll < 0.20) return 0;
-    if (roll < 0.50) return 1;
-    if (roll < 0.80) return 2;
-    return 3;
-  } else if (r >= 4.0) {
-    // Average: 0-2 extra
-    if (roll < 0.40) return 0;
-    if (roll < 0.75) return 1;
-    return 2;
-  } else {
-    // Lower-rated: 0-1 extra
-    if (roll < 0.65) return 0;
-    return 1;
-  }
-}
-
+// ── Seed function ───────────────────────────────────
 async function seed() {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('✅ MongoDB connected');
 
-    // ─────────── PART 1: ADD CHECK-INS ───────────
-    console.log('\n📍 Generating extra check-ins...');
-    const restaurants = await Restaurant.find({});
-    console.log(`   Found ${restaurants.length} restaurants`);
-
-    const newCheckins = [];
-    for (const r of restaurants) {
-      const schoolUsers = users.filter(u => u.school === r.school);
-      if (!schoolUsers.length) continue;
-
-      const count = pickExtraCheckins(r.rating);
-      for (let i = 0; i < count; i++) {
-        const reviewer = randomItem(schoolUsers);
-        // Spread over last 90 days
-        const daysAgo = Math.floor(Math.random() * 90);
-        const hoursAgo = Math.floor(Math.random() * 24);
-        const checkinTime = new Date(Date.now() - daysAgo * 86400000 - hoursAgo * 3600000);
-
-        newCheckins.push({
-          user_id: reviewer.id,
-          restaurant_place_id: r.place_id,
-          restaurant_name: r.name,
-          school: r.school,
-          checkin_time: checkinTime
-        });
-      }
-    }
-
-    console.log(`   ✅ Inserting ${newCheckins.length} new check-ins...`);
-    if (newCheckins.length) {
-      await Checkin.insertMany(newCheckins);
-    }
-
-    const totalCheckins = await Checkin.countDocuments();
-    console.log(`   Total check-ins in DB: ${totalCheckins}`);
-
-    // Coverage stats
-    const distinctRestaurants = await Checkin.distinct('restaurant_place_id');
-    const coverage = (distinctRestaurants.length / restaurants.length * 100).toFixed(1);
-    console.log(`   Restaurants with check-ins: ${distinctRestaurants.length}/${restaurants.length} (${coverage}%)`);
-
-    // ─────────── PART 2: ADD REPLIES ───────────
     console.log('\n💬 Generating mock replies...');
 
     // Clear existing replies (parent_review_id is set)
@@ -160,6 +84,11 @@ async function seed() {
     // Get top-level reviews
     const topReviews = await Review.find({ parent_review_id: null });
     console.log(`   Found ${topReviews.length} top-level reviews`);
+
+    if (!topReviews.length) {
+      console.error('   ❌ No reviews found — run seed_reviews.js first');
+      process.exit(1);
+    }
 
     const newReplies = [];
     for (const review of topReviews) {
@@ -202,15 +131,15 @@ async function seed() {
       await Review.insertMany(newReplies);
     }
 
+    // Summary
     const totalReviews = await Review.countDocuments({ parent_review_id: null });
     const totalReplies = await Review.countDocuments({ parent_review_id: { $ne: null } });
-    console.log(`\n📊 Final summary:`);
+    console.log(`\n📊 Summary:`);
     console.log(`   Top-level reviews: ${totalReviews}`);
     console.log(`   Replies: ${totalReplies}`);
-    console.log(`   Total check-ins: ${totalCheckins}`);
-    console.log(`   Restaurant coverage: ${coverage}%`);
+    console.log(`   Avg replies per review: ${(totalReplies / totalReviews).toFixed(2)}`);
 
-    console.log('\n🎉 Seeding completed!');
+    console.log('\n🎉 Replies seed completed!');
     process.exit(0);
   } catch (err) {
     console.error('❌ Seed failed:', err.message);
