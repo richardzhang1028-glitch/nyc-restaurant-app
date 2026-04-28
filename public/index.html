@@ -1679,10 +1679,30 @@ const BiteServices = (() => {
       },
 
       async removeCheckin(restaurantId) {
-        // Backend doesn't support deletion (intentional). Just untoggle locally.
-        this._localIds.delete(restaurantId);
-        return [...this._localIds];
-      }
+  const auth = readJSON('biteNYC.auth', {});
+  if (!auth.isAuthed || !auth.user?.id) {
+    this._localIds.delete(restaurantId);
+    return [...this._localIds];
+  }
+  // Find the restaurant's place_id
+  const all = window.BITE_RESTAURANTS ? Object.values(window.BITE_RESTAURANTS).flat() : [];
+  const r = all.find(x => x.id === restaurantId);
+  if (!r) {
+    this._localIds.delete(restaurantId);
+    return [...this._localIds];
+  }
+  try {
+    await fetch('/api/checkins', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: auth.user.id, restaurant_place_id: r.place_id })
+    });
+  } catch (err) {
+    console.error('Failed to delete checkin:', err);
+  }
+  this._localIds.delete(restaurantId);
+  return [...this._localIds];
+}
     },
     reviews:{
       async getReviews(restaurantId) {
@@ -2387,15 +2407,18 @@ function updateCheckinUI() {
 }
 async function toggleCheckin(id) {
   if (!id) return false;
+  const restaurant = findRestaurant(id);
   if (checkedInSet.has(id)) {
     checkedInSet = new Set(await BiteServices.checkins.removeCheckin(id));
     checkedIn = checkedInSet;
     showToast('Check-in removed');
+    if (restaurant) await renderRestaurantCheckins(restaurant);
     return false;
   }
   checkedInSet = new Set(await BiteServices.checkins.createCheckin(id));
   checkedIn = checkedInSet;
   showToast('Checked in');
+  if (restaurant) await renderRestaurantCheckins(restaurant);
   return true;
 }
 async function doCheckin() {
@@ -3138,12 +3161,14 @@ async function removeSocialFriend(friendId) {
 async function boot() {
   await restoreAuth();
   favState = await BiteServices.favourites.getFavourites();
-  checkedInSet = new Set(await BiteServices.checkins.getMyCheckins());
-  checkedIn = checkedInSet;
   userLocation = await BiteServices.location.getLocation();
   applyAuthUI();
+  await initMap();  // loads BITE_RESTAURANTS
+  // Now that restaurants are loaded, we can translate check-in place_ids to frontend ids
+  checkedInSet = new Set(await BiteServices.checkins.getMyCheckins());
+  checkedIn = checkedInSet;
+  await buildList();  // re-render restaurant cards with check-in badges
   await renderFavourites();
-  await initMap();
   await buildDeals();
   // If not logged in, show login screen on first visit
   if (isAuthed) {

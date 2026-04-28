@@ -27,6 +27,11 @@ router.post('/', async (req, res) => {
     if (!user_id || !restaurant_place_id) {
       return res.status(400).json({ error: 'user_id and restaurant_place_id are required' });
     }
+    // Check if user already has a check-in here
+    const existing = await Checkin.findOne({ user_id, restaurant_place_id });
+    if (existing) {
+      return res.status(200).json(existing);
+    }
     const checkin = await Checkin.create({
       user_id,
       restaurant_place_id,
@@ -36,6 +41,7 @@ router.post('/', async (req, res) => {
     });
     res.status(201).json(checkin);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Failed to create check-in' });
   }
 });
@@ -111,6 +117,23 @@ router.get('/restaurant/:place_id', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch check-ins' });
   }
 });
-
+// ── DELETE /api/checkins  ────────────────────────────
+// Remove a user's check-in at a specific restaurant.
+router.delete('/', async (req, res) => {
+  try {
+    const { user_id, restaurant_place_id } = req.body;
+    if (!user_id || !restaurant_place_id) {
+      return res.status(400).json({ error: 'user_id and restaurant_place_id are required' });
+    }
+    const result = await Checkin.deleteOne({ user_id, restaurant_place_id });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: 'Check-in not found' });
+    }
+    res.json({ message: 'Check-in removed' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to remove check-in' });
+  }
+});
 module.exports = router;
 module.exports.Checkin = Checkin;
