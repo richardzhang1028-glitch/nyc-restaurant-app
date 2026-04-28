@@ -11,6 +11,15 @@ const users = require('./users.json');
 const restaurantSchema = new mongoose.Schema({}, { strict: false });
 const Restaurant = mongoose.model('Restaurant', restaurantSchema);
 
+const checkinSchema = new mongoose.Schema({
+  user_id: { type: Number, required: true },
+  restaurant_place_id: { type: String, required: true },
+  restaurant_name: String,
+  school: String,
+  checkin_time: { type: Date, default: Date.now }
+});
+const Checkin = mongoose.model('Checkin', checkinSchema);
+
 const reviewSchema = new mongoose.Schema({
   restaurant_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant', required: true },
   author: { type: String, default: 'Anonymous' },
@@ -183,6 +192,36 @@ async function seed() {
     if (reviewsToInsert.length) {
       await Review.insertMany(reviewsToInsert);
     }
+
+    // Make sure every reviewer has a check-in at the place they reviewed
+    console.log('\n📍 Adding check-ins for reviewers...');
+    const userByName = new Map(users.map(u => [u.name, u]));
+    const restaurantById = new Map(restaurants.map(r => [String(r._id), r]));
+    const existing = await Checkin.find({}, { user_id: 1, restaurant_place_id: 1 });
+    const existingSet = new Set(existing.map(c => `${c.user_id}|${c.restaurant_place_id}`));
+
+    const newCheckins = [];
+    for (const review of reviewsToInsert) {
+      const user = userByName.get(review.author);
+      const restaurant = restaurantById.get(String(review.restaurant_id));
+      if (!user || !restaurant) continue;
+      const key = `${user.id}|${restaurant.place_id}`;
+      if (existingSet.has(key)) continue;
+      existingSet.add(key);
+      // Visit happened a few days before the review
+      const checkinTime = new Date(new Date(review.created_at).getTime() - (1 + Math.floor(Math.random() * 7)) * 86400000);
+      newCheckins.push({
+        user_id: user.id,
+        restaurant_place_id: restaurant.place_id,
+        restaurant_name: restaurant.name,
+        school: review.school,
+        checkin_time: checkinTime
+      });
+    }
+    if (newCheckins.length) {
+      await Checkin.insertMany(newCheckins);
+    }
+    console.log(`   ✅ Added ${newCheckins.length} new check-ins for reviewers`);
 
     console.log('\n📊 Summary:');
     console.log(`   Total reviews: ${await Review.countDocuments()}`);
