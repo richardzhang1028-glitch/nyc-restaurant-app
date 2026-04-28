@@ -1878,7 +1878,7 @@ emailInput.addEventListener('keydown', e => {
   if (e.key === 'Enter' && !submitBtn.disabled) handleSubmit();
 });
 function fillDemo(key) {
-  emailInput.value = { columbia:'emma@columbia.edu', nyu:'alex@nyu.edu' }[key];
+  emailInput.value = { columbia:'emma@columbia.edu', nyu:'maya@nyu.edu' }[key];
   emailInput.dispatchEvent(new Event('input'));
   emailInput.focus();
 }
