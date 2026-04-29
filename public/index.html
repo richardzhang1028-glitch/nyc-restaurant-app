@@ -1930,6 +1930,9 @@ async function handleSubmit() {
   await setView('home', { skipMap:true });
   const cfg = SCHOOL_CFG[school];
   if (mapInstance) mapInstance.flyTo(cfg.center, cfg.zoom, { duration:.8 });
+  // Load this user's check-ins so badges show immediately
+  checkedInSet = new Set(await BiteServices.checkins.getMyCheckins());
+  checkedIn = checkedInSet;
   await buildDeals();
   await buildList();
   await renderFavourites();
