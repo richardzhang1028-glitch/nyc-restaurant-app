@@ -40,7 +40,10 @@ Create a `.env` file in the project root with:
 ```
 MONGODB_URI=mongodb://localhost:27017/bitenyc
 PORT=3000
+GOOGLE_API_KEY=your_google_places_api_key_here
 ```
+
+The Google API key is only needed if re-fetching restaurant data from scratch via `fetch_restaurants.js`. The seeded `restaurants.json` already includes valid photo URLs.
 
 ### 5. Seed the database (in this order)
 
@@ -55,7 +58,7 @@ node data/seed_replies.js
 What each does:
 - `seed.js` — 1067 restaurants + 10 deals
 - `seed_users_checkins.js` — 15 users + 120 base check-ins
-- `seed_realistic_checkins.js` — replaces with realistic check-ins (30-80 per user)
+- `seed_realistic_checkins.js` — replaces with realistic check-ins (30-80 per user, friend overlap)
 - `seed_reviews.js` — generates reviews and check-ins for reviewers
 - `seed_replies.js` — generates reply threads on reviews
 
@@ -113,6 +116,53 @@ nyc-restaurant-app/
 
 ---
 
+## 🏗️ Architecture Notes
+
+### Single-Page App (`public/index.html`)
+
+The frontend is intentionally consolidated into one HTML file containing the markup, CSS, and JavaScript. This keeps the deployment simple (no build step, no bundlers) and makes the app easy to inspect end-to-end. Views switch via CSS class swaps on `<body>` (e.g., `body.view-home`, `body.view-map`, `body.view-social`) rather than route changes, making transitions instant.
+
+### Service Layer
+
+All API interactions are abstracted through a `BiteServices` object that handles:
+- API calls with try/catch error handling
+- Translation between backend `place_id` (Google Places ID) and frontend numeric IDs
+- A 60-second restaurant cache to reduce redundant fetches
+- Optimistic UI updates: the local state changes immediately while persistence happens in the background
+
+### State Management
+
+Frontend state is held in module-level variables populated on boot/login:
+- `checkedInSet` (Set of restaurant IDs the user has checked in at)
+- `favState` (favourites organized by list)
+- `authState` (auth session and school theming)
+
+These are populated AFTER `BITE_RESTAURANTS` is loaded so that ID translation works correctly. UI re-renders are triggered after each population to ensure check-in badges and favourites appear immediately.
+
+### Real-Time Leaderboard
+
+The leaderboard is computed live via MongoDB aggregation on every request — no caching:
+1. `$match` filters check-ins by school (if scoped)
+2. `$group` counts check-ins per user (or per restaurant)
+3. `$sort` ranks by count descending
+4. `$lookup` joins with the `users` collection for names
+
+This guarantees rankings always reflect the current state of the database.
+
+### School-Aware Theming
+
+Email domain detection (`@columbia.edu` vs `@nyu.edu`) drives a CSS variable swap (`--p`, `--p-tint`, `--p-mid`) that re-themes the entire app instantly — Columbia blue (#1A6BB5) or NYU purple (#8B1DB5).
+
+### Map Strategy
+
+The Leaflet map is persistent across all views but **selectively visible**:
+- **Map / Favourites / Detail** — map visible
+- **Discover / Social** — map hidden behind a solid cream background to focus attention on content
+
+This gives users location context where it matters without visual noise where it doesn't.
+
+---
+
 ## 🔌 API overview
 
 All endpoints are prefixed with `/api` and return JSON.
@@ -130,7 +180,8 @@ All endpoints are prefixed with `/api` and return JSON.
 - `DELETE /api/users/:id/friends/:friendId` — remove friend
 
 ### Check-ins
-- `POST /api/checkins` — create `{ user_id, restaurant_place_id, restaurant_name, school }`
+- `POST /api/checkins` — create `{ user_id, restaurant_place_id, restaurant_name, school }` (rejects duplicates)
+- `DELETE /api/checkins` — remove `{ user_id, restaurant_place_id }`
 - `GET /api/checkins?user_id=&school=` — list check-ins
 - `GET /api/checkins/user/:userId` — all check-ins for a user
 - `GET /api/checkins/restaurant/:place_id` — all check-ins at a restaurant (joined with user info)
@@ -163,6 +214,7 @@ All endpoints are prefixed with `/api` and return JSON.
 
 // Checkin
 { user_id, restaurant_place_id, restaurant_name, school, checkin_time }
+// Unique compound: (user_id, restaurant_place_id) — one check-in per user per restaurant
 
 // Restaurant
 { place_id, name, lat, lng, address, rating, price, cuisine, photo_url, school, ... }
@@ -183,12 +235,28 @@ All endpoints are prefixed with `/api` and return JSON.
 - **Restaurant discovery** — search, multi-select filters (Casual / Study-Friendly / Healthy / Upscale), price filter, Nearby filter using geolocation
 - **Interactive map** — Leaflet map with school-aware focus and clickable markers
 - **Restaurant detail page** — photos, ratings, reviews with reply threads, recent check-ins, get directions
-- **Check-ins** — one-tap check-in to track visits (one per user per restaurant)
+- **Check-ins** — one-tap toggle to track visits (one per user per restaurant, enforced backend + frontend)
 - **Reviews + replies** — 1-5 star ratings, written reviews, threaded replies
-- **User-scoped favourites** — saved across devices, organized by category
-- **Social tab** — leaderboard (students + restaurants), friends list with activity feed
+- **User-scoped favourites** — saved across sessions, organized by category
+- **Social tab** — leaderboard (students + restaurants, including friends-only views), friends list with activity feed
 - **Real-time leaderboard** — MongoDB aggregation recomputes rankings on every load
 - **Mobile responsive** — works on desktop, tablet, and mobile viewports
+
+---
+
+## 🔄 Iterative Development
+
+This codebase reflects multiple rounds of feedback-driven iteration after the initial demo. Major post-demo improvements include:
+
+- **Multi-select vibe filters** with renamed categories (Casual / Study-Friendly / Healthy / Upscale) replacing the original single-select filter system
+- **Mobile-first responsive design** with breakpoints for tablet, phone, and iPhone SE-sized viewports
+- **Recent Check-ins** display on each restaurant detail page
+- **Reply threads** on reviews for richer social context
+- **Clickable leaderboard restaurant rows** that navigate to detail pages
+- **Cleaner Discover and Social pages** with adaptive panel system that hides the map when content takes focus
+- **Backend duplicate prevention** for check-ins (one per user per restaurant)
+- **Friends-scope leaderboard** showing where the user's friends actually eat
+- **Realistic seed data** with friend overlap on restaurants and weighted-by-rating popularity
 
 ---
 
