@@ -1,12 +1,11 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
-const fs = require('fs');
 
-// ── 导入数据 ────────────────────────────────────────
+// import seed data
 const restaurants = require('./restaurants.json');
 const deals = require('./deals.json');
 
-// ── Schemas ─────────────────────────────────────────
+// schemas
 const restaurantSchema = new mongoose.Schema({
     place_id: String,
     name: String,
@@ -43,30 +42,30 @@ const dealSchema = new mongoose.Schema({
 const Restaurant = mongoose.model('Restaurant', restaurantSchema);
 const Deal = mongoose.model('Deal', dealSchema);
 
-// ── 主函数 ──────────────────────────────────────────
+// main seed function
 async function seed() {
     try {
-        // 连接数据库
+        // connect to mongodb
         await mongoose.connect(process.env.MONGODB_URI);
         console.log('✅ MongoDB connected');
 
-        // 清空旧数据
+        // clear old data
         console.log('\n🗑️  Clearing old data...');
         await Restaurant.deleteMany({});
         await Deal.deleteMany({});
         console.log('   Done!');
 
-        // 导入餐厅数据
+        // insert restaurant data
         console.log('\n🍽️  Inserting restaurants...');
         const insertedRestaurants = await Restaurant.insertMany(restaurants);
         console.log(`   ✅ ${insertedRestaurants.length} restaurants inserted`);
 
-        // 导入deals数据
+        // insert deals data
         console.log('\n🎫  Inserting deals...');
         const insertedDeals = await Deal.insertMany(deals);
         console.log(`   ✅ ${insertedDeals.length} deals inserted`);
 
-        // 统计
+        // print database summary
         console.log('\n📊 Database summary:');
         console.log(`   Restaurants: ${await Restaurant.countDocuments()}`);
         console.log(`   Columbia:    ${await Restaurant.countDocuments({ school: 'columbia' })}`);

@@ -20,7 +20,7 @@ const dealSchema = new mongoose.Schema({
 const Deal = mongoose.model('Deal', dealSchema);
 
 // ── GET /api/deals ──────────────────────────────────
-// 获取所有deals（支持按学校筛选）
+// Get all active deals, with optional filters by school and type
 router.get('/', async (req, res) => {
     try {
         const { school, type } = req.query;
@@ -41,7 +41,7 @@ router.get('/', async (req, res) => {
 });
 
 // ── POST /api/deals ─────────────────────────────────
-// 添加新deal
+// Add a new deal
 router.post('/', async (req, res) => {
     try {
         const {

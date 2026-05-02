@@ -7,10 +7,10 @@ console.log('API KEY:', process.env.GOOGLE_API_KEY ? '✅ Found' : '❌ Missing'
 const API_KEY = process.env.GOOGLE_API_KEY;
 const BASE_URL = 'https://maps.googleapis.com/maps/api/place';
 
-// ── 24个搜索点（Columbia + NYU 各12个）─────────────────────────
+// 24 search points, 12 for Columbia and 12 for NYU
 const SEARCH_POINTS = [
 
-    // Columbia 区域（12个点，覆盖3公里）
+    // Columbia area search points
     { name: 'columbia', theme: 'blue', lat: 40.8075, lng: -73.9626, radius: 500 },
     { name: 'columbia', theme: 'blue', lat: 40.8155, lng: -73.9626, radius: 500 },
     { name: 'columbia', theme: 'blue', lat: 40.7995, lng: -73.9626, radius: 500 },
@@ -24,7 +24,7 @@ const SEARCH_POINTS = [
     { name: 'columbia', theme: 'blue', lat: 40.7880, lng: -73.9626, radius: 500 },
     { name: 'columbia', theme: 'blue', lat: 40.8075, lng: -73.9380, radius: 500 },
 
-    // NYU 区域（12个点，覆盖3公里）
+    // NYU area search points
     { name: 'nyu', theme: 'purple', lat: 40.7295, lng: -73.9965, radius: 500 },
     { name: 'nyu', theme: 'purple', lat: 40.7375, lng: -73.9965, radius: 500 },
     { name: 'nyu', theme: 'purple', lat: 40.7215, lng: -73.9965, radius: 500 },
@@ -39,7 +39,7 @@ const SEARCH_POINTS = [
     { name: 'nyu', theme: 'purple', lat: 40.7295, lng: -74.0200, radius: 500 },
 ];
 
-// ── 工具函数 ────────────────────────────────────────────────────
+// Helper functions 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 function priceLevel(level) {
@@ -76,7 +76,7 @@ function getCuisine(types = []) {
     return 'Restaurant';
 }
 
-// ── Step 1: 抓取附近餐厅列表 ────────────────────────────────────
+// Step 1: Fetch nearby restaurants 
 async function fetchNearby(point, pointIndex, total) {
     let results = [];
     let pageToken = null;
@@ -131,7 +131,7 @@ async function fetchNearby(point, pointIndex, total) {
     return results;
 }
 
-// ── Step 2: 获取餐厅详细信息 ────────────────────────────────────
+// Step 2: Fetch restaurant details
 async function fetchDetails(placeId) {
     const params = {
         place_id: placeId,
@@ -161,7 +161,7 @@ async function fetchDetails(placeId) {
     }
 }
 
-// ── Step 3: 去重函数 ─────────────────────────────────────────────
+// Step 3: Remove duplicate restaurants
 function deduplicate(restaurants) {
     const seen = new Set();
     const unique = [];
@@ -176,10 +176,10 @@ function deduplicate(restaurants) {
     return unique;
 }
 
-// ── 主函数 ───────────────────────────────────────────────────────
+// Main function
 async function main() {
 
-    // API Key 检查
+    // Check for API key
     if (!API_KEY) {
         console.error('❌ Missing GOOGLE_API_KEY in .env');
         process.exit(1);
@@ -187,7 +187,7 @@ async function main() {
     console.log('✅ API Key found');
     console.log(`🚀 Starting fetch from ${SEARCH_POINTS.length} search points...\n`);
 
-    // ── Phase 1: 抓取所有搜索点的餐厅列表 ──────────────────────────
+    // Phase 1: Fetch restaurants from all search points
     console.log('═══════════════════════════════════');
     console.log('Phase 1: Fetching nearby restaurants');
     console.log('═══════════════════════════════════');
@@ -198,7 +198,7 @@ async function main() {
         const point = SEARCH_POINTS[i];
         const nearby = await fetchNearby(point, i + 1, SEARCH_POINTS.length);
 
-        // 存入Map自动去重
+        // Store results in a Map to remove duplicates automatically
         for (const r of nearby) {
             if (!rawResults.has(r.place_id)) {
                 rawResults.set(r.place_id, {
@@ -217,7 +217,7 @@ async function main() {
     console.log(`   Raw results:    ${[...rawResults.values()].reduce((n) => n + 1, 0)}`);
     console.log(`   Unique places:  ${rawResults.size}`);
 
-    // ── Phase 2: 获取每个餐厅的详细信息 ────────────────────────────
+    // Phase 2: Fetch details for each restaurant
     console.log('\n═══════════════════════════════════');
     console.log('Phase 2: Fetching restaurant details');
     console.log('═══════════════════════════════════');
@@ -270,24 +270,24 @@ async function main() {
     console.log(`   Success: ${success}`);
     console.log(`   Failed:  ${failed}`);
 
-    // ── Phase 3: 保存结果 ───────────────────────────────────────────
+    // Phase 3: Save results
     console.log('\n═══════════════════════════════════');
     console.log('Phase 3: Saving results');
     console.log('═══════════════════════════════════');
 
     if (!fs.existsSync('./data')) fs.mkdirSync('./data');
 
-    // 保存完整JSON
+    // Save full restaurant data as JSON
     fs.writeFileSync(
         './data/restaurants.json',
         JSON.stringify(allRestaurants, null, 2)
     );
 
-    // 统计
+    // Count restaurants by school
     const columbia = allRestaurants.filter(r => r.school === 'columbia');
     const nyu = allRestaurants.filter(r => r.school === 'nyu');
 
-    // 按菜系统计
+    // Count restaurants by cuisine
     const cuisineCount = {};
     for (const r of allRestaurants) {
         cuisineCount[r.cuisine] = (cuisineCount[r.cuisine] || 0) + 1;
